@@ -1,4 +1,4 @@
-#week1 ARTS
+# week1 ARTS
 ## [Algorithm](algorithm/Algorithm.md)  Leetcode [711. Jewels and Stones](https://leetcode.com/problems/jewels-and-stones/)
 * 求S中所有出现在J中的字符的个数，大小写敏感
 * 比如：J=aB S=aABBb ，3个
