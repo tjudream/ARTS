@@ -1,6 +1,7 @@
 # 我的ARTS
 * [week0](src/week0/README.md)
 * [week1](src/week1/README.md)
+* [week2](src/week2/README.md)
 ***
 # ARTS
 ## 什么是ARTS
