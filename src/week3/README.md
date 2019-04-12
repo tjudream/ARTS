@@ -53,3 +53,98 @@ func removeOuterParentheses(S string) string {
 这里用rune数组代替栈
 
 ##Review
+### 阅读文章 [Understanding The Memory Model Of Golang : Part 1](https://medium.com/@edwardpie/understanding-the-memory-model-of-golang-part-1-9814f95621b4)
+这篇文章的其实就是为了让你看视频，Golang的内存模型主要都在视频中讲解的。
+
+视频内容如下：
+#### 主要讲解内容
+* 程序内存模型
+* 分配内存和垃圾回收
+* 怎样监控内存的使用
+
+#### 经典的内存模型
+* 静态内存区：存储静态数据和代码指令，通常比较小
+* 栈：后进先出，存储程序当前位置，存储局部变量等
+    * 存储当前程序的执行状态
+    * 由栈帧组成
+    * 每个栈帧存储一个函数调用和本地变量
+    * 一个栈相当于一个执行状态
+    * 栈的大小通常是预先分配的
+    * 对于并发程序需要复制整个实体模型
+* 堆：
+    * 具有可伸缩性
+    * 大小受限于系统内存
+    * 存储指针、数组、大的数据结构
+#### Go的内存模型
+* 每个协程都包含一个堆和一个栈
+* 栈大小是可伸缩的
+* 栈是从堆中借用内存的
+
+```go
+type Artist struct {
+	Name                string
+    Performances        []Event
+	InstrumentsPlayed   []Instrument
+}
+```
+* 在堆上分配内存的写法
+```go
+    slash := new(Artist)
+```
+* 在栈上分配内存的写法
+```go
+    axel := &Arist{}
+    axel := &Arist{
+    	Name: "Axel Rose",
+    	...
+    }
+```
+
+  如果是在c语言中，栈比较小的情况下可能导致栈内存溢出，但是在go中，go会扩展栈内存
+  
+#### 分配内存和垃圾回收
+* 在一个函数中new一个对象时会分配一个堆内存
+* 当函数返回之后，被分配的内存会被标记为可复用，仅仅是标记
+* go的垃圾回收算法：标记清除法
+    1. 第一步，垃圾收集器标记所有可达的对象
+    2. 第二步，清除所有不可达的
+    3. go现在已经从stop-the-world模式转到了并发清除模式
+#### 监控内存的使用
+* Benchmark 监控内存
+* struct中成员变量的顺序会影响struct占用内存的大小
+```go
+type A1 struct {
+	b bool
+	a float64
+	c int32
+}
+type A2 struct {
+	a float64
+	c int32
+	b bool
+}
+
+func main() {
+	a1 := A1{}
+	a2 := A2{}
+	fmt.Println(unsafe.Sizeof(a1)) //24
+	fmt.Println(unsafe.Sizeof(a2)) //16
+}
+```
+* 使用 profiler 监控
+
+#### go在什么情况下会出现内存泄露
+* 僵尸协程或者未关闭reader
+* go申请了系统资源但是使用之后没有还回给系统
+* 使用 runtime.GC() 强制执行垃圾回收
+
+## Tip
+### gdb调试代码时如何打印一块内存
+* 使用 p *(a.b.data)@1000 ,但是打印太多最后会出现...
+* 使用 x /1000uh buf
+    * 其中 1000 表示1000个单位
+    * u 表示按十六进制显示
+    * h 表示双字节一个单位
+* 更多用法可以参考 [http://visualgdb.com/gdbreference/commands/x](http://visualgdb.com/gdbreference/commands/x)
+
+## Share
