@@ -148,7 +148,7 @@ func main() {
 * 更多用法可以参考 [http://visualgdb.com/gdbreference/commands/x](http://visualgdb.com/gdbreference/commands/x)
 
 ## Share
-### 04 深入浅出数据库索引(上)
+### 04 深入浅出数据库索引(上) - 极客时间 MySQL实战45讲
 * 索引的出现就是为了提高数据的查询效率，就像书的目录
 #### 索引常见的模型
 * 哈希
