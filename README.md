@@ -4,6 +4,7 @@
 * [week2](src/week2/README.md)
 * [week3](src/week3/README.md)
 * [week4](src/week4/README.md)
+* [week5](src/week5/README.md)
 ***
 # ARTS
 ## 什么是ARTS
