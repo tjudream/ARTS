@@ -230,6 +230,48 @@ Flush tables with read lock; (FTWRL)
     2. 异常处理机制有差异。如果由于客户端异常断开: FTWRL 会自动释放全局锁，整个库回归正常状态；而readonly会继续保持，需要主动设置。
         
 #### 表级锁
+* MySQL表级锁有2种：
+    * 表锁
+        * 表锁的语法 lock tables ... read/write
+        * 表锁类似于FTWRT，可以通过unlock tables手动解锁，也可以在客户端断开时自动释放。
+        * lock table语法除了会限制其他线程的读写外，也会限制本线程的操作：
+            1. A 执行 lock tables t1 read, t2 wirte;
+            2. 其他线程写t1、读t2都会被阻塞
+            3. 在A执行unlock之前只能读t1、读写t2；不允许写t1，也不能访问其他表            
+    * 元数据锁(meta data lock, MDL)
+        * 不需要显示使用，在访问一个表时会被自动加上
+        * 保证读写正确性，当一个线程A在select时，防止另外的线程B alter table
+        * MDL由MySQL5.5引入：对表增删改查时，加MDL读锁；alter table时，加MDL写锁
 
+关于MDL你需要知道的坑：给一个小表加字段，可能导致整个库挂掉
+* 给一个表加字段、修改字段、加索引 需要扫描全表数据
 
+操作序列：
+
+session A| session B | session C | session D
+---- | ---- | ---- | ---- |
+begin;|
+select * from t limit 1; | 
+| |select * from t limit 1; | 
+| | | alter table t add f int;(blocked) |
+| | | | select * from t limit 1;(blocked)
+
+* A对t加MDL读锁
+* B对t加MDL读锁，读锁与读锁不互斥，所以B可以正常执行
+* C对t加MDL写锁，写锁与读锁互斥，需要等待A、B释放读锁后方可执行
+* D对t加MDL读锁，需要等待C的写锁释放，也就是C的后续所有对该表的操作都会被阻塞
+
+如果这个表的查询语句频繁，那么这个库的线程很快就会爆满，拖垮整个库
+
+#### 如何安全地给小表加字段
+1. 需要解决长事物，从information_schema.innodb_trx 表中可以查询到当前正在执行的事物。
+    * 可以考虑kill掉事物，然后执行DDL
+    * 或者等待事物结束后执行DDL
+2. 如果请求频繁，可能无法等到事物停止，或者kill之后新的事物马上开始
+    * 在alter table语句中增加等待时间，如果在等待时间内可以拿到MDL写锁则执行变更，如果不能则停止变更，释放MDL写锁。
+        * 目前MariaDB和AliSQL这两个分支支持DDL NOWAIT/WAIT n
+        ```sql
+          ALTER TABLE tbl_name NOWAITE add column ...
+          ALTER TABLE tbl_name WAIT N and column ...
+        ```
 
