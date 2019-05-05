@@ -125,10 +125,49 @@ IT行业发展迅速。学习基础知识，把基础知识学牢，比无限的
 ---
 
 ## Tip
-### 
+### SQL 语句分类 DDL, DML, DCL 和 TCL
+| |DDL|DML|DCL|TCL|
+|---|---|---|---|---|
+|全称|Data Define Language|Data Manipulation Language|Data Control Language|Transaction Control Language|
+|中文释义|数据定义语言|数据操作语言|数据控制语言|事务控制语言|
+|SQL命令|create - 创建 database 和它的对象(table, index, views, store procedure, function, triggers)|select - 从表中检索数据|grant - 给用户赋权|commit - 提交一个事务|
+| |alter - 修改已存在的数据库的结构|insert - 向表中插入数据|revoke - 收回通过grant给用户赋予的权限|rollback - 回滚一个事务|
+| |drop - 从数据库中删除对象|update - 更新表中已经存在的数据| |savepoint - 回滚事务到组内创建的生成点|
+| |truncate - 删除表中的所有记录，同时删除给表分配的存储空间|delete - 从表中删除数据| |set transaction - 指定事务特征|
+| |comment - 给数据加注释|merge - upsert(insert or update) 更新并插入| | |
+| |rename - 重命名|call - 调用 PL/SQL 或 Java 子程序| | |
+| | |explain plan - 解释数据访问路径| | |
+| | |lock table - 并发控制，锁表| | |
 
 ---
     
+
 ## Share
-### 
+### 07  行锁功过：怎么减少行锁对性能的影响 —— 极客时间-MySQL实战45讲
+行锁是针对数据库表中行记录的锁。
+#### 两阶段锁
+* 行锁是在需要的时候才加上，但并不是不需要了就立刻释放，而要等到事务结束时才释放。这就是两阶段锁协议。
+
+如果你的事务中需要锁多行，要把最可能造成锁冲突的、最可能影响并发度的锁尽量往后放。
+
+#### 死锁和死锁检测
+| 事务A | 事务B |
+| --- | --- |
+| begin;| begin;|
+|update t set k = k + 1 where id = 1; | |
+| | update t set k = k + 1 where id = 2;|
+|update t set k = k + 1 where id = 2;| |
+| | update t set k = k + 1 where id = 1;|
+
+A持有id=1的行锁，等待B释放id=2的行锁；B持有id=2的行锁，等待A释放id=1的行锁
+
+出现死锁之后的两种策略：
+* 等待超时。通过参数 innodb_lock_wait_timeout 来设置，默认是50s
+* 发起死锁检测，主动回滚死锁链条中的某一个事务，让其他事务得以继续执行。 
+innodb_deadlock_detect 设置为 on, 表示开启这个逻辑。默认开启。
+
+死锁检测需要耗费大量的CPU资源。那么如何解决热点行更新导致的性能问题：
+* 如果确保业务一定不会出现死锁，可以临时把死锁检测关闭
+* 控制并发度。可以考虑采用中间件或者修改MySQL源码，对于相同行的更新采用排队策略。
+
 
