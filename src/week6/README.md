@@ -10,6 +10,7 @@
 其中左子树和右子树也都是最大二叉树
 
 ### 2. 解题思路
+#### 算法1：递归
 采用递归的算法，找到最大值，递归构造最大值左侧和右侧的子数组
 
 1. 构造一个树节点的结构体
@@ -17,8 +18,16 @@
 3. 用 arr[0:maxIndex] 递归构造左子树 left
 4. 用 arr[maxIndex + 1: len(arr)] 构造右子树 right
 5. 用最大值, left, right 构造树的根节点 root 并返回
+#### 算法2：O(N)算法 [https://leetcode.com/problems/maximum-binary-tree/discuss/106146/c-on-solution](https://leetcode.com/problems/maximum-binary-tree/discuss/106146/c-on-solution)
+1. 从左到右依次扫描数组，一次构件一个树的节点
+2. 用stack保存一部分树的节点，并且保证降序排列
+3. 对于数组中的每个元素：
+    1) 从stack中pop出元素，直到栈空或者栈中的元素大于当前元素的值；
+    2) 这个大值的元素（仍然在栈中）是当前元素的根，最后出栈的元素是当前元素的左子节点；
+    3) 最后把当前元素入栈
 
 ### 3. 代码
+#### 算法1
 ```go
 type TreeNode struct {
 	Val int
@@ -52,6 +61,23 @@ func constructMaximumBinaryTree(nums []int) *TreeNode {
 }
 
 ```
+#### 算法2
+```go
+var vecs []*TreeNode
+	for _, num := range nums {              \\ O(N)
+		cur := &TreeNode{num, nil, nil}
+		for len(vecs) > 0 && vecs[len(vecs) - 1].Val < num {  \\由于每个元素之入栈一次，所以在整个循环过程中这里是O(N)的
+			cur.Left = vecs[len(vecs) - 1]
+			vecs = vecs[:len(vecs) - 1]
+		}
+		if len(vecs) > 0 {
+			vecs[len(vecs) -1].Right = cur
+		}
+		vecs = append(vecs, cur)    \\每个元素只入栈一次
+	}
+	return vecs[0]
+```
+
 ### 4. 复杂度分析
 * 时间复杂度：平均复杂度 O(nlogn), 最坏情况 O(n<sup>2</sup>) 。
     * 为了找到最大值，每次需要遍历一个数组 O(n), 递归深度取决于树的高度, 平均树高 logn，所以平均时间复杂度为 O(nlogn)
