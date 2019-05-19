@@ -149,7 +149,7 @@ func insertIntoBSTWithoutRecursion(root *TreeNode, val int) *TreeNode {
 
 ---
 
-## Tip gcc 编译的详细过程
+## Tip GCC 编译过程的4个步骤
 ```jshelllanguage
 gcc hello.c 
 ```
