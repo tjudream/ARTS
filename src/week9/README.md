@@ -87,6 +87,16 @@ func uniqueMorseRepresentations(words []string) int {
 
 ![pipe-filter_pattern](pipe-filter_pattern.png)
 #### 5. 代理模式
+此模式用于构建具有解耦组件的分布式系统。这些组件之间可以通过远程服务调用进行互相通讯。
+代理组件负责协调各个组件之间的通讯。
+
+服务发布者将它们的能力（服务和特征）发布给代理。客户端向代理发送请求，然后代理将请求发送给相应的服务。
+
+使用场景：
+* 消息代理软件，如 Apache ActiveMQ, Apache Kafka, RabbitMQ 和 JBoss Messaging
+
+![broker_pattern](broker_pattern.png)
+#### 6. 端到端模式
 
 
 ---
