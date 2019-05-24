@@ -180,5 +180,58 @@ MVC 模式把一个交互式应用分成3个部分：
 ---
     
 ## Share
-### 
+### 10 MySQL 为什么有时会选错索引
+建表
+```sql
+CREATE TABLE `t` (
+  `id` int(11) NOT NULL,
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `a` (`a`),
+  KEY `b` (`b`)
+) ENGINE=InnoDB；
+```
+#### 优化器的逻辑
+优化器选择索引的原则是语句的执行代价最小。包括：
+* 扫描行数
+* 是否使用临时表
+* 是否排序
+* 等等
+##### 如何判断扫描行数
+MySQL 是根据统计信息来估算需要扫描的行数的。
 
+统计信息就是索引的“区分度”。一个索引上不同的值越多，其区分度越好。一个索引上不同值的个数，我们称为“基数”。
+* 基数越大，区分度越好。 show index 方法可以查看索引的基数（cardinality）。
+#### MySQL 通过采样统计的方法获得基数
+采样统计时， InnoDB 默认会选择 N 个数据页，统计页面上的不同值，得到一个平均值，然后乘以这个索引的页面数，就得到了索引的基数。
+
+当变更的数据行数超过 1/M 的时候，会自动触发重新做一次索引统计。
+
+MySQL中有两种存储索引统计的方式，可以通过设置参数 innodb_stats_persistent 的值来选择：
+* 设置为 on 时， 表示统计信息会持久化存储。这时，默认的 N 是20， M 是10。
+* 设置为 off 时， 表示统计信息只存储在内存中。这时，默认的 N 是8，M 是16。
+
+analyze table t; 命令，可以用来重新统计索引信息。
+
+#### 索引选择异常和处理
+* 方法一： 采用 froce index 强行选择一个索引。
+    * 写法不优美
+    * 如果索引改了名字，则需要重写 SQL
+    * 如果迁移到别的数据库，可能导致语句不兼容
+```sql
+select * from t force index(a) where a between 10000 and 20000;
+```
+* 方法二： 修改语句引导 MySQL 使用我们期望的索引
+```sql
+mysql> explain select * from t where (a between 1 and 1000) and (b between 50000 and 100000) order by b limit 1;
+改为
+mysql> explain select * from t where (a between 1 and 1000) and (b between 50000 and 100000) order by b,a limit 1;
+```
+这样改完语句后保证业务不变，且查询结果也不受影响。
+
+之前没有选索引 a 是因为考虑到 b 需要排序，而索引是有序的，选 b 可以避免对 b 排序。
+
+修改之后 a 也要排序，所以选 a 、 b 都一样，但是 a 扫描行数更少，所以选 a 
+
+* 方法三：在某些场景下，我们可以新建一个更合适的索引，来提供给优化器做选择，或者删掉误用的索引
