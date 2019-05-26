@@ -173,7 +173,17 @@ MVC 模式把一个交互式应用分成3个部分：
 
 ---
 
-## Tip
+## Tip C/C++ 编译的6个步骤
+* 扫描
+* 语法分析
+* 语义分析
+* 源代码优化
+* 代码生成
+* 目标代码优化
+
+Source Code ---Scanner--> Tokens ---Parser--> SyntaxTree ---Semantic Analyzer--> Commented Syntax Tree ---Source Code Optimizer--> Intermediate Representation ---Code Generator--> Target Code ---Code Optimizer--> Final Target Code
+
+源代码 ---扫描器--> 记号 ---语法分析器--> 语法树 ---语义分析器--> 带标记的语法树 ---源码级优化器--> 中间代码 ---代码生成器--> 目标代码 ---目标代码优化器--> 最终目标代码
 
 ### 
 
