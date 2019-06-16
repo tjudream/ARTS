@@ -46,12 +46,44 @@ func flipAndInvertImage(A [][]int) [][]int {
 ---
 
 ## Review [1. Spring WebFlux](https://docs.spring.io/spring/docs/current/spring-framework-reference/web-reactive.html#webflux)
+## Web on Reactive Stack
+Version 5.1.7.RELEASE
+
+这部分文档涵盖了对构建在 Reactive Streams API 上的 Reactive 技术栈的 web 应用的支持，这些应用运行在非阻塞服务器上，如 Netty, Undertow
+和 Servlet 3.1+ 容器上。共分为以下几个章节 Spring WebFlux 框架，the reactive WebClient， 对测试的支持和 reactive 库。
+Servlet 技术栈的 web 应用，请参见  [Web on Servlet Stack](https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#spring-web)
+
+## 1. Spring WebFlux
+Spring Framwork 中包含的原生的 web 框架 Spring Web MVC 是专门为 Servlet API 和 Servlet 容器构建的。
+reactive-stack web 框架 Spring WebFlux 是在 5.0 版本中添加进来的。它是完全非阻塞的，支持响应式流背压
+([Reactive Streams](https://www.reactive-streams.org/) back pressure, 在数据流从上游生产者向下游消费者传输的过程中，
+上游生产速度大于下游消费速度，导致下游的 Buffer 溢出，这种现象就叫做 Backpressure 出现), 并且在 Netty, Undertow 和 Servlet 3.1+ 容器上运行。
+
+两个 web 框架都反映了其源模块的名称(spring-mvc 和 spring-webflux) 并在 Spring 框架中并存。每个模块都是可选的。
+应用可以用其中的一个或者另一个，或者同时用两个。例如，使用 Spring MVC 的控制层，同时使用 reactive WebClient。
+
+### 1.1 概览
+Spring WebFlux 为什么会出现？
+
+部分原因是需要一个为阻塞的 web 技术栈，来使用少量的线程处理并发性，并且可以使用更少的硬件资源进行扩展。Servlet 3.1 确实提供了非阻塞 I/O 的 API.
+但是，使用它会远离 Servlet API 的其他部分，其中契约是同步的(Filter, Servlet)或阻塞(getParameter, getPart)。这是新的通用 API 作为跨
+任何非阻塞运行时的基础的动机。这是很重要的，因为这是建立在异步和非阻塞空间中的服务（例如 Netty）。
+
+另一部分原因是函数式编程。就像在 Java5 中添加了注解(例如 REST controller 或单元测试的注解)创造的机会一样，在 Java8 中添加 lambda 
+表达式为 Java 中的函数式 API 创造了机会。这对于非阻塞程序和 continuation-style API (由 CompletableFuture 和 ReactiveX 推广)
+来说是一个福音，它允许异步逻辑的声明性组合。在编程模型级别，Java 8 使 Spring WebFlux 能够提供函数式 Web endpoint 以及带注解的 controller。
 
 ---
 
 ## Tip
 
-### 
+### RabbitMQ Exchange 类型
+| exchange 类型 | 默认的预先声明的名称 |
+| --- | --- |
+| direct exchange | 空串和 amq.direct |
+| topic exchange | amp.topic |
+| fanout exchange | amq.fanout |
+| header exchange | amq.match(和 amq.header) |
 
 ---
     
