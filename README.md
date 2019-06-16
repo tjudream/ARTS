@@ -11,6 +11,7 @@
 * [week9](src/week9/README.md)
 * [week10](src/week10/README.md)
 * [week11](src/week11/README.md)
+* [week12](src/week12/README.md)
 
 
 ***
