@@ -84,5 +84,22 @@ func numTilePossibilities(tiles string) int {
 ---
     
 ## Share
-### 
+### 15 答疑文章（一）：日志和索引相关问题 —— 极客时间 MySQL实战45讲
+### 日志相关问题
+#### 问题1: 两阶段提交的不同瞬间，MySQL 如果发生异常重启，是怎么保证数据完整性的？
+![two-phase_commit](two_phase_commit.png)
+
+```sql
+update T set c=c+1 where ID=2;
+```
+上图是该语句的执行步骤
+
+这里的 commit 并非 MySQL 语法中的 commit 语句，而是 commit 步骤，是指事务提交过程中的一个小步骤，也是最后一步，
+当这个步骤执行完成后，这个事务就提交完成了。
+
+commit 语句执行的时候，会包含 commit 步骤。
+
+在两阶段提交的不同时刻，MySQL异常重启会出现什么现象。
+
+
 

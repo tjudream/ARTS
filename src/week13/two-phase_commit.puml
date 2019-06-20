@@ -1,0 +1,20 @@
+@startuml
+title 两阶段提交
+
+start
+:取 ID=2 这一行;
+if (数据页在内存中？) then (否)
+    : 磁盘中读入内存;
+else (是)
+endif
+: 返回行数据;
+: 将这行的 c 值加 1;
+: 写入新行;
+: 新行更新到内存;
+: 写入 redolog 处于 prepare 阶段;
+-> 时刻 A;
+: 写入 binlog;
+-> 时刻 B;
+: 提交事务，处于 commit 状态;
+stop
+@enduml
