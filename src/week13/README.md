@@ -101,5 +101,36 @@ commit 语句执行的时候，会包含 commit 步骤。
 
 在两阶段提交的不同时刻，MySQL异常重启会出现什么现象。
 
+* 如果在时刻 A 崩溃
+
+也就是在 redo log 处于 prepare 阶段之后，写入 binlog 之前的时间点。
+
+此时 binlog 还没有写，redo log 还没有提交，所以崩溃恢复的时候这个事务会回滚。这时候 binlog 还没写，所以不会传到备库。
+
+* 在时刻 B 崩溃
+
+也就是 binlog 写完了， redo log 还没有 commit 前的时间点。
+
+崩溃恢复时的判断规则：
+1. 如果 redo log 里的事务是完整的，也就是已经有了 commit 标识，则直接提交
+2. 如果 redo log 里面的事务只有完整的 prepare，则判断对应的事务 binlog 是否存在并完整：
+    * a. 如果是，则提交事务
+    * b. 否则，回滚事务
+
+时刻 B 对应的是 2.a 的情况，所以崩溃恢复过程中事务会被提交。
+
+#### 追问1： MySQL 怎么知道 binlog 是完整的
+回答：一个事务的 binlog 是有完整格式的
+* statement 格式的 binlog，最后会有 COMMIT
+* row 格式的 binlog，最后会有一个 XID event
+
+在 MySQL 5.6.2 版本之后，引入了 binlog-checksum 参数，用来验证 binlog 的内容的正确性。
+对于 binlog 日志由于磁盘的原因，可能会在日志中间出错，MySQL 可以通过校验 checksum 的结果来发现。
+
+#### 追问2：redo log 和 binlog 是怎么关联起来的
+回答：它们有一个共同的数据字段，叫 XID。崩溃恢复的时候，会按顺序扫描 redo log
+* 如果碰到既有  prepare，又有 commit 的 redo log，就直接提交
+* 如果碰到只有 prepare，而没有 commit 的 redo log， 就拿着 XID 去 binlog 找对应的事务
+#### 追问3： 处于 prepare 阶段的 redo log 加上完整的 binlog， 重启就能恢复， MySQL 为什么要这么设计
 
 
