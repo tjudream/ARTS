@@ -87,13 +87,78 @@ func repeatedNTimes2(A []int) int {
 
 ---
 
-## Review []()
+## Review [How to Tell an Employee Their Work Isn’t Good Enough](https://forge.medium.com/how-to-tell-an-employee-their-work-isnt-good-enough-30098949f528)
+如何告诉员工他们的工作做的并非足够好？
+
+——友好、清晰、坚定地概述你对员工的期望。
+
+在与难相处的员工谈话时，要少一点以职位为出发点，多一点以合作为出发点，才能产生积极的效果。
+
+下面是如果能够做到这一点的一些建议。
+
+* 步骤1 以称赞开头
+用三明治法来谈话：首先称赞，然后批评，最后再称赞。
+* 步骤2 要具体
+你谈话的目标之一应该是让你的员工确切地了解到他们是如何以及为什么没有达到目标。
+经理和人力资源代表使用清晰和直接的语言是至关重要的。
+谈话时最好举出具体的例子。
+* 步骤3 询问你能如何提供帮助
+员工表现下滑的原因有很多。无论是什么原因，你都是想找到问题的根源，这样你可以帮助员工回到正轨。
+* 步骤4 建议一些后续步骤
+要有同情心，但也要明确表示他们的表现不能继续下滑。
+* 步骤5 设定改进的最后期限
+最后通牒很少能起到激励作用，但重要的是要让陷入困境的员工知道，如果他们不达到预期，就会有后果。
+* 步骤6 让员工跟进
+一旦你概述了问题，并提出了一个计划，就要设置一个安全措施，以确保员工和你彼此了解。
 
 ---
 
 ## Tip
 
-### 
+### Redis Zrangebyscore 命令
+Redis Zrangebyscore 返回有序集合中指定分数区间的成员列表。有序集成员按分数值递增(从小到大)次序排列。
+
+具有相同分数值的成员按字典序来排列(该属性是有序集提供的，不需要额外的计算)。
+
+默认情况下，区间的取值使用闭区间 (小于等于或大于等于)，你也可以通过给参数前增加 ( 符号来使用可选的开区间 (小于或大于)。
+
+#### 语法
+ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]
+
+#### 返回值
+指定区间内，带有分数值(可选)的有序集成员的列表。
+
+#### 举例
+```redis
+ZRANGEBYSCORE zset (1 5
+```
+1 < score <= 5
+```redis
+ZRANGEBYSCORE zset (5 (10
+```
+5 < score < 10
+
+#### 实例
+```redis
+redis> ZADD myzset 1 "one"
+(integer) 1
+redis> ZADD myzset 2 "two"
+(integer) 1
+redis> ZADD myzset 3 "three"
+(integer) 1
+redis> ZRANGEBYSCORE myzset -inf +inf
+1) "one"
+2) "two"
+3) "three"
+redis> ZRANGEBYSCORE myzset 1 2
+1) "one"
+2) "two"
+redis> ZRANGEBYSCORE myzset (1 2
+1) "two"
+redis> ZRANGEBYSCORE myzset (1 (2
+(empty list or set)
+redis> 
+```
 
 ---
     
