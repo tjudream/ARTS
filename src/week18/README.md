@@ -61,13 +61,150 @@ x,y := 0,0
 
 ---
 
-# Review : []()
+# Review : [Lambdas are not functional programming](https://medium.com/@johnmcclean/lambdas-are-not-functional-programming-63533ce2eb74)
+在使用 Java 语言的程序员中，没有人正在进行函数式编程是一件好事。
+## 到底什么是函数式编程？
+在使用 Java 语言的人中，有许多人正在试图将传统的命令式 Java 代码和函数式代码混合在一起使用，并取得了不同程度的成功。
+
+如果我们采用函数原则在 Java 中成功地混合了面向对象和函数式编程，我们最好了解它们是什么。函数式语言的核心功能是什么？
+
+## 是懒惰吗？
+Java 中的 Stream 是懒惰的。也许懒惰是函数式编程的核心原则，要真正发挥作用，必须懒惰。
+
+### 懒惰和性能
+懒惰可以提升性能，毕竟最高效的代码就是没有被执行的代码。
+```java
+Stream.generate(this::loadFromSomewhere)
+      .filter(this::identifyStuffWeWant)
+      .limit(10)
+      .collect(Collectors.toList());
+```
+例如，以上代码边加载边过滤，够 10 条结果就停止加载。而不是全部加载完成后再过滤。
+
+懒惰是函数式语言的一个非常酷的特性，我们可以在 Java 中利用其优势。但我不认为它是函数式语言的一个关键特性。
+## 是函数组合吗？
+函数组合可以实现高阶函数，并从类别理论扩展了概念/模式的实现。
+
+只有纯粹的函数才能实现这些，这将我们带入下一个潜在的核心特征。
+## 是不变性吗？
+不可变性对于函数式编程来说是很重要的。
+
+如果你混用了 lambad 和可变状态，那么你正在创建伪装成函数式代码的命令式代码。
+## 是类型系统吗？
+在向函数式编程过渡的过程中，面向对象开发人员必须跨越的最大障碍之一，可能是处理一个更强大的类型系统，该系统强制实现函数式编程。
+## 是单子和函子(monads and pro-functor optics)吗？
+将范畴理论中的概念引入类型化函数编程有助于我们处理编译器强制约束。
+## 这是编译时的正确性
+函数式语言具有疯狂的类型系统、对可变状态的限制以及对纯函数的迷恋，它们帮助我们摆脱导致运行时错误的坏习惯。
+## 如果 javac 不能帮我们，我们能做什么？
+如果您希望真正采用Java中函数式编程的优势而不仅仅是使用Lambda创建令人难以理解的强制命令代码，那么我相信我们需要使用Java编译器来帮助它们。
+
+与其花时间试图欺骗它，我们应该:
+* 充分利用泛型类型。
+* 使非法状态无法在我们的代码中表示
+* 让我们自己的数据类成为不可变的，尽可能使用不可变的集合(正确的集合)
+* 尽可能使用避免运行时魔法和反射的库
+
+## OO(面向对象) 和 FP(函数式编程) 一起
+OO 和 FP 之间没有冲突。
+## 真正的压力：规则和FP
+真正的问题不在 OO 和 FP 之间，而是共同的必要代码和约束的函数式代码之间。
+
 
 ---
 
-# Tip : 
+# Tip : Redis 存储文件
 
-## 
+## 如何使用 Redis 存取文件
+```java
+public class RedisClient { 
+    @Autowired 
+    public ShardedJedisPool shardedJedisPool;
+      //序列化方法 	
+    public byte[] objectToByte(Object value) { 
+        if (value == null) {
+             return null;
+        } 
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream(); 
+        ObjectOutputStream outputStream; 
+        try { 
+            outputStream = new ObjectOutputStream(arrayOutputStream); 
+            outputStream.writeObject(value);
+         } catch (IOException e) { 
+            e.printStackTrace(); 
+        } finally { 
+            try { 
+                arrayOutputStream.close(); 
+            } catch (IOException e) { 
+                e.printStackTrace(); 
+            }
+        } 
+        return arrayOutputStream.toByteArray(); 
+    } 
+
+    //byte[]转Object 	
+    public Object byteToObject(byte[] byteValue) { 
+        try { 
+            ObjectInputStream inputStream; 
+            inputStream = new ObjectInputStream(new ByteArrayInputStream(byteValue)); 
+            Object obj = inputStream.readObject(); 
+            return obj; 
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+        } 
+        return null; 
+    }      //Redis 保存文件 	
+
+    /**
+    * 存储文件到 redis 中
+    * @param key
+    * @param path
+    */
+    public void setFile(String key, String path) { 
+        ShardedJedis jedis = null; 
+        try { 
+            jedis = shardedJedisPool.getResource(); 
+            File file = new File(path);
+             if (!file.exists()) { 
+                return; 
+            } 
+            jedis.set(key.getBytes(), objectToByte(file)); 
+        } catch (JedisConnectionException e) { 
+            if (jedis != null) { 
+                shardedJedisPool.returnBrokenResource(jedis);
+                 jedis = null; 
+            } 
+            throw e;
+        } finally { 
+            if (jedis != null) { 
+                shardedJedisPool.returnResource(jedis);
+            }
+        } 
+    }  
+    /**
+    * 获取 Redis 保存的文件
+    * @param key
+    * @return 
+    */
+    public byte[] getFileData(String key) { 
+        ShardedJedis jedis = null; 
+        try {
+             jedis = shardedJedisPool.getResource(); 
+            return jedis.get(key.getBytes());
+        } catch (JedisConnectionException e) { 
+            if (jedis != null) { 
+               shardedJedisPool.returnBrokenResource(jedis);
+                jedis = null;
+             } 
+            throw e; 
+        } finally { 
+            if (jedis != null) { 
+                shardedJedisPool.returnResource(jedis); 
+            } 
+        }
+    } 
+}
+```
 
 ---
     
