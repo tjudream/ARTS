@@ -149,3 +149,101 @@ mysql> select * from t where id>=10 and id<11 for update;
 
 所以 A 此时的锁在主键索引上，行锁 id=10 和 next-key lock (10,15]
 ## 案例四：非唯一索引范围锁
+| session A | session B | session C |
+| --- | --- | --- |
+| begin; <br> select * from t where c >= 10 and c < 11 for update; | | |
+| | insert into t values(8,8,8); <br> (blocked) | |
+| | | update t set d=d+1 where c=15; <br> (blocked) |
+
+加锁规则与案例三唯一不同是：在第一次用 c=10 定位记录的时候，在索引 c 上加了 (5,10] 这个 next-key lock 后，由于索引 c 是非唯一索引，
+没有优化规则，所以不会蜕变为行锁，因此最终 A 加的锁是 (5,10] 和 (10,15]
+
+## 案例五：唯一索引范围锁 bug
+| session A | session B | session C |
+| --- | --- | --- |
+| begin; <br> select * from t where id>10 and id<=15 for update; | | |
+| | update t set d=d+1 where id=20; <br> (blocked) | | 
+| | | insert into t values(16,16,16); <br> (blocked) |
+
+A 是一个范围查询，按照原则1，在索引 id 上只加 (10,15] 这个 next-key lock，并且因为 id 是唯一索引，所以判断到 id=15 这一行就应该停止。
+
+但是，InnoDB 会扫描到第一个不满足条件的行为止，也就是 id=20，而且由于这是范围扫描，因此索引 id 上的 (15,20] 这个 next-key lock 也会被锁上。
+
+因此 B 更新 id=20 会被锁住，C 要插入 id=16 也会被锁住。
+## 案例六：非唯一索引上存在"等值"的例子
+首先插入一条记录
+```sql
+mysql> insert into t values(30,10,30);
+```
+索引 c 
+![index_c](index_c.png)
+第一行表示 c 的索引值，第二行表示对应的主键值
+
+两个 c=10 的记录之间也是有间隙的
+
+delete 语句的加锁逻辑和 select ... for update 是类似的
+
+| session A | session B | session C |
+| --- | --- | --- |
+| begin; <br> delete from t where c=10; | | |
+| | insert into t values(12,12,12); <br> (blocked) | |
+| | | update t set d=d+1 where c=15; <br> (Query OK) |
+
+A 在遍历的时候，先访问第一个 c=10 的记录。根据原则 1， 这里加的是 (c=5,id=5) 到 (c=10,id=10) 这个 next-key lock
+
+然后 A 继续向右查找，直到碰到 (c=15,id=15) 这一行，循环结束。根据优化 2，这是一个等值查询，向右查找到了不满足条件的行，
+所以会退化成 (c=10,id=10) 都 (c=15,id=15) 的间隙锁。
+
+也就是说 delete 在索引 c 上的加锁范围如下图所示
+![delete_lock](delete_lock.png)
+虚线表示开区间，即在(c=5,id=5) 和(c=15,id=15) 这两行上没有锁。
+## 案例七：limit 语句加锁
+| session A | session B |
+| --- | --- |
+| begin; <br> delete from t where c=10 limit 2; | |
+| | insert into t values(12,12,12); <br> (Query OK) |
+由于表 t 中只有 2 条 c=10 的记录，所以是否加 limit 2 对最终结果是没有影响的，但是加锁效果却不同。
+
+可以看到 B 中的 insert 语句通过了，与案例六不同。
+
+因为加了 limit 2 之后，遍历到 (c=10,id=30) 这一行之后，满足条件的语句已经有两条了，所以循环就结束了。
+
+索引 c 上的加锁范围就变成了从 (c=5,id=5) 到 (c=10,id=30) 这个前开后闭区间，如下图所示
+![limit_lock](limit_lock.png)
+
+因此，在删除数据的时候尽量加 limit。这样不仅可以控制删除数据的条数，让操作更安全，还可以减小加锁的范围。
+## 案例八：一个死锁的例子
+| session A | session B |
+| --- | --- |
+| begin; <br> select id from t where c=10 lock in share mode; | |
+| | update t set d=d+1 where c=10; <br> (blocked) |
+| insert into t values(8,8,8); | |
+| | ERROR 1213 (40001); <br> Deadlock found when trying to get lock; try restarting transaction |
+
+1. A 启动事务后执行查询语句加 lock in share mode，在索引 c 上加上 next-key lock (5,10] 和间隙锁 (10,15)
+2. B 的 update 语句也要在索引 c 上加上 next-key lock (5,10], 进入所等待
+3. A 插入 (8,8,8)，被 B 的间隙锁锁住。所以出现了死锁。
+
+session B 的 next-key lock 不是还没申请成功吗？
+
+其实，B 的"加 next-key lock (5,10]"操作，实际上分成了两步，先是加 (5,10) 的间隙锁，加锁成功；然后加 c=10 的行锁，这时候才被锁住的。
+
+也就是说我们分析加锁规则的时候可以用 next-key lock 来分析。但是，具体执行的时候，要分成间隙锁和行锁两段来执行。
+
+## 思考题
+| session A | session B |
+| --- | --- |
+| begin; <br> select * from t where c>=15 and c<=20 order by c desc lock in share mode; | |
+| | insert into t values(6,6,6); <br> (blocked) |
+
+分析：
+
+1. 由于是 order by c desc，第一个要定位的是索引 c 上"最右边的" c=20 的行，所以会加上间隙锁 (20,25) 和
+next-key lock (15,20]
+2. 在索引 c 上向左遍历，要扫描到 c=10 才停止，所以 next-key lock 会加到 (5,10],这正是阻塞 session B 的 insert 语句的原因
+3. 在扫描过程中，c=20,c=15,c=10 这三行都存在值，由于是 select *，所以会在主键 id 上加两个行锁。
+
+因此，A 的 select 语句锁范围是：
+1. 索引 c 上的 (5,25)
+2. 主键索引上的 id=15,20 两行锁
+

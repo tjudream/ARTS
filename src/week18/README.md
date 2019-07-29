@@ -408,6 +408,7 @@ commit;
 ### 思考题
 
 | session A | session B | session C |
+| --- | --- | --- |
 | begin; <br> select * from t where c>=15 and c <=20 order by c desc for update; | | |
 | | insert into t values(11,11,11); | | 
 | | | insert into t values(6,6,6); |
