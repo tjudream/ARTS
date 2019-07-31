@@ -59,7 +59,118 @@ func allPossibleFBT(N int) []*TreeNode {
 
 ---
 
-# Review []()
+# Review [Key Kubernetes Commands](https://towardsdatascience.com/key-kubernetes-commands-741fe61fde8)
+## 在本地运行 K8s
+已 Mac 为例，首先下载带有 K8s 的 [Docker Desktop](https://www.docker.com/products/docker-desktop?source=post_page---------------------------)
+
+安装成功后，启动 docker， 在状态栏会有一个 docker icon
+
+![docker_icon](docker_icon.png)
+
+然后安装 Kubernetes,选择 Preferences...
+
+![kubernetes_install](kubernetes_install.png)
+
+如果在国内最好先设置代理，否则很难安装成功
+![kub_proxy](kub_proxy.png)
+
+安装 kubernetes
+![kub_install](kub_install.png)
+
+安装成功后会看到 docker 和 kubernetes 都在运行中的状态
+![running](running.png)
+
+## 运行第一个 K8s App
+在命令行中运行如下命令
+```jshelllanguage
+kubectl create deployment hello-node --image=gcr.io/hello-minikube-zero-install/hello-node
+```
+查看 kubernetes 资源的状态
+```jshelllanguage
+kubectl get all
+```
+查看 K8s 目前正在做什么的命令
+```jshelllanguage
+kubectl get events
+```
+![hello_node](hello_node.png)
+
+目前 Pod 已经起来了，下一步需要将这个 Pod 发布成 service，这样才能访问到容器内部的服务
+```jshelllanguage
+kubectl expose deployment hello-node --type=LoadBalancer --port=8080
+```
+查看 service 的创建情况
+```jshelllanguage
+kubectl get services
+```
+![hello_service](hello_service.png)
+
+服务发布成功后就可以通过 8080 端口访问服务了, [http://localhost:8080/](http://localhost:8080/)
+
+除了有命令行之外，还可以通过 YAML 文件创建服务
+
+## kubectl
+kubectl 是 K8s 的命令行工具
+* kubectl 包括 get、create 和  describe 等操作
+* 以上操作需要针对 Deployment, StatefulSet, Service 等资源进行
+* kubectl 命令格式：
+```jshelllanguage
+kubectl an_action a_resource a_resource_name --flags
+```
+name 和 flags 是可选的
+
+获取所有 Pods 
+```jshelllanguage
+kubectl get pods
+```
+## 常用的 kubectl Resources
+* pods, po
+* nodes, no
+* deployments, deploy
+* replicasets, rs
+* daemonsets, ds
+* statefulsets, sts
+* jobs
+* cronjobs, cj
+* services, svc
+* persistentvolumes, pv
+* persistentvolumeclaims, pvc
+
+all 表示所有资源，获取所有资源
+```jshelllanguage
+kubectl get all
+```
+查看所有 kubenetes 的历史事件
+```jshelllanguage
+kubectl get events
+```
+
+## kubectl 的常用操作
+* help - 获取帮助信息
+* get - 显示资源信息
+* describe - 显示资源的详细信息
+* logs - 显示容器日志
+* exec - 进入一个容器并执行进程
+* apply - 创建或修改一个资源
+* delete - 删除资源
+
+例如：
+```jshelllanguage
+kubectl get pods --help
+kubectl get all
+kubectl describe all
+kubectl logs hello-node-7f5b6bd6b8-gr7m7
+kubectl logs hello-node-7f5b6bd6b8-gr7m7 -c my-container
+kubectl exec -it my_pod bash
+kubectl delete pod my_pod
+kubectl delete rs --all
+```
+使用 apply 命令式可以使用 YAML 或者 JSON 配置文件来创建或修改资源。
+
+apply 是创建和更新资源的瑞士军刀。
+
+如果想要了解更多，可以查看 [Kubernetes 的官网文档](https://kubernetes.io/docs?source=post_page---------------------------)
+
 
 ---
 
