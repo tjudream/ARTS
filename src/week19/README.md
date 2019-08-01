@@ -174,9 +174,36 @@ apply 是创建和更新资源的瑞士军刀。
 
 ---
 
-# Tip
-
-## 
+# Tip 使用 ChatterBot 运行一个聊天机器人
+1. 下载并安装 python3 [下载地址](https://www.python.org/downloads/)
+2. 从 [Github](https://github.com/gunthercox/ChatterBot) 上下载源码 
+3. 编译 ChatterBot
+    ```jshelllanguage
+    pip3 install ./ChatterBot
+    ```
+4. 安装依赖
+    ```jshelllanguage
+    python3 -m spacy download en
+    pip3 install chatterbot-corpus
+    ```
+5. 运行官方示例
+    ```jshelllanguage
+    from chatterbot import ChatBot
+    from chatterbot.trainers import ChatterBotCorpusTrainer
+    
+    chatbot = ChatBot('Ron Obvious')
+    
+    # Create a new trainer for the chatbot
+    trainer = ChatterBotCorpusTrainer(chatbot)
+    
+    # Train the chatbot based on the english corpus
+    trainer.train("chatterbot.corpus.english")
+    
+    # Get a response to an input statement
+    chatbot.get_response("Hello, how are you today?")
+    ```
+6. 开始聊天
+    ![chatterbot](chatterbot.png)
 
 ---
     
