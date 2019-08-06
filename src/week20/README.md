@@ -52,7 +52,24 @@ func sumTree(root *TreeNode) int {
 
 ---
 
-# Review []()
+# Review [How a Googler solves coding problems](https://blog.usejournal.com/how-a-googler-solves-coding-problems-ec5d59e73ec5)
+## 一步一步地
+## 1）画出来
+不要急于写代码，甚至不要想代码应该怎么写。先构思，在纸上画一画。
+
+把想法用算法和形式化的方式写出来。
+## 2）用文字写出来
+把你的算法一步一步的写出来
+## 3）写伪代码
+先写伪代码
+## 4）将伪代码翻译成代码
+尽可能的把伪代码翻译成代码
+## 5）不要猜测
+你不确定的事情越多，你的程序出错的概率就越大。
+
+其遵循如下公式： a(n)=2<sup>n</sup> - 1
+
+通过 Google 搜索，不确定部分的代码，并进行测试
 
 ---
 
