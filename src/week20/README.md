@@ -73,9 +73,126 @@ func sumTree(root *TreeNode) int {
 
 ---
 
-# Tip
+# Tip HTTPClient 上传和下载文件
+```java
+public class HttpClientUtil {
+	
+	private static final Logger logger = LoggerFactory.getLogger(HttpClientUtil.class);
 
-## 
+	public static final String HTTPS = "https";
+	
+    public static CloseableHttpClient getHttpClient() throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
+        RegistryBuilder<ConnectionSocketFactory> registryBuilder = RegistryBuilder.create();
+        ConnectionSocketFactory plainSF = new PlainConnectionSocketFactory();
+        registryBuilder.register("http", plainSF);
+        KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        TrustStrategy anyTrustStrategy = new TrustStrategy() {
+            @Override
+            public boolean isTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+                return true;
+            }
+        };
+        SSLContext sslContext = SSLContexts.custom().useTLS().loadTrustMaterial(trustStore, anyTrustStrategy).build();
+        LayeredConnectionSocketFactory sslSF = new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+        registryBuilder.register("https", sslSF);
+        Registry<ConnectionSocketFactory> registry = registryBuilder.build();
+        PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(registry);
+        return HttpClientBuilder.create().setConnectionManager(connManager).build();
+    }
+
+    /**
+    *  上传多个文件
+* @param url
+* @param FilePath
+* @param file1
+* @param file1Name
+* @param file2
+* @param file2Name
+* @param file3
+* @param file3Name
+* @param sessionId
+* @return 
+* @throws NoSuchAlgorithmException
+* @throws KeyStoreException
+* @throws KeyManagementException
+* @throws IOException
+*/
+    public static HttpResult uploadMultiFiles(String url, String FilePath, MultipartFile file1, String file1Name, MultipartFile file2, String file2Name, MultipartFile file3, String file3Name, String sessionId) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
+        logger.info("url : [{}], sessionId : {}", url, sessionId);
+        CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+        if (url.contains(HTTPS)) {
+            httpClient = getHttpClient();
+        }
+
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+
+        // 文件流
+        builder.addBinaryBody("file1", file1.getInputStream(), ContentType.MULTIPART_FORM_DATA, file1Name);
+        builder.addBinaryBody("file2", file2.getInputStream(), ContentType.MULTIPART_FORM_DATA, file2Name);
+        builder.addBinaryBody("file3", file3.getInputStream(), ContentType.MULTIPART_FORM_DATA, file3Name);
+        builder.addTextBody("filePath", filePath);
+        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+        HttpEntity entity = builder.build();
+
+        HttpPost httpPost = new HttpPost(url);
+        httpPost.setHeader(new BasicHeader("Cookie", "sessionId=" + sessionId));
+        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(5000).build();
+        httpPost.setConfig(requestConfig);
+        httpPost.setEntity(entity);
+        HttpResponse httpResponse = httpClient.execute(httpPost);
+        HttpEntity httpEntity = httpResponse.getEntity();
+        int httpCode = httpResponse.getStatusLine().getStatusCode();
+        String result = EntityUtils.toString(httpEntity, Consts.UTF_8);
+        logger.info("httpcode : [{}], result : [{}]", httpCode, result);
+        HttpResult httpResult = new HttpResult();
+        httpResult.setHttpCode(httpCode);
+        httpResult.setResult(result);
+        return httpResult;
+    }
+
+    /**
+    * 下载文件获取文件流
+* @param url
+* @param sessionId
+* @return 
+* @throws NoSuchAlgorithmException
+* @throws KeyStoreException
+* @throws KeyManagementException
+* @throws IOException
+*/
+    public static InputStream doGetForFile(String url, String sessionId)
+            throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
+        CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+        if (url.contains(HTTPS)) {
+            httpClient = getHttpClient();
+        }
+        logger.info("http get begin, url={}", url);
+        HttpGet httpGet = new HttpGet(url);
+        httpGet.addHeader(new BasicHeader("Cookie", SessionUtil.SESSION_KEY_COOKIE + sessionId + ";" + SessionUtil.S_KEY_COOKIE + s));
+        HttpResponse httpResponse = httpClient.execute(httpGet);
+        HttpEntity httpEntity = httpResponse.getEntity();
+        int httpCode = httpResponse.getStatusLine().getStatusCode();
+        Header[] headers = httpResponse.getAllHeaders();
+        Map<String,String> headerMap = new HashMap<>(headers.length);
+        if (headers != null && headers.length > 0) {
+            for (Header header : headers) {
+                if (headerMap.containsKey(header.getName())) {
+                    String value = headerMap.get(header.getName()) + ";" + header.getValue();
+                    headerMap.put(header.getName(), value);
+                } else {
+                    headerMap.put(header.getName(), header.getValue());
+                }
+            }
+        }
+        logger.info("headers is {}", headerMap);
+        logger.info("http get end, httpcode={}, url={}", httpCode, url);
+        if (httpCode != HttpStatus.SC_OK) {
+            return null;
+        }
+        return httpEntity.getContent();
+    } 
+}
+```
 
 ---
     
