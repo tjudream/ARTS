@@ -58,7 +58,19 @@ func partitionLabels(S string) []int {
 
 ---
 
-# Review []()
+# Review [10 Steps to Become a Millionaire in 5 Years (or Less)](https://medium.com/better-marketing/10-skills-to-becoming-a-millionaire-in-5-years-or-less-e16b8b20500c)
+5年内成为百万富翁的10步法
+## 1. 设定一个愿景
+* 想想比知识更重要
+* 创造力比经验更重要
+## 2. 开发一个90天的系统来衡量进步和未来的节奏
+每隔90天进行一次复盘：
+* 跟踪你的钱
+* 跟踪你的健康
+* 跟踪你的时间
+* 跟踪你想要成功的领域的进展
+## 3. 养成一种生活在流动或高峰状态的日常习惯
+
 
 ---
 
