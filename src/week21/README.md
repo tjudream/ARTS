@@ -108,9 +108,134 @@ func partitionLabels(S string) []int {
 
 ---
 
-# Tip
+# Tip Ubuntu19.04 下搭建梯子
+使用 ShadowSocks + Privoxy 代理，在命令行中访问 google
+## 使用阿里的源
+```jshelllanguage
+sudo mv /etc/apt/sources.list /etc/apt/sources.list.bak
+sudo vim /etc/apt/sources.list
+```
+使用以下源：
 
-## 
+```jshelllanguage
+deb http://mirrors.aliyun.com/ubuntu/ disco main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu/ disco main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu/ disco-security main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu/ disco-security main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu/ disco-updates main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu/ disco-updates main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu/ disco-backports main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu/ disco-backports main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu/ disco-proposed main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu/ disco-proposed main restricted universe multiverse
+```
+更新源
+```jshelllanguage
+sudo apt-get update
+sudo apt-get upgrade
+```
+
+## 安装 ShadowSocks 客户端
+```jshelllanguage
+sudo apt-get install python-pip
+sudo pip install shadowsocks
+ls /usr/local/bin/sslocal
+```
+## 配置 ShadowSocks
+```jshelllanguage
+sudo vim /etc/shadowsocks.conf
+```
+配置文件内容：
+```jshelllanguage
+{
+    "server":"your_server_ip",
+    "server_port":your_server_port,
+    "local_address": "127.0.0.1",
+    "local_port":1080, 
+    "password":"your_server_passwd",
+    "timeout":300,
+    "method":"aes-256-cfb",
+    "fast_open": false,
+    "workers": 1 
+}
+```
+## 启动 ShadowSocks
+```jshelllanguage
+sudo nohup sslocal -c /etc/shadowsocks.conf >/dev/null 2>%1 &
+# 查看进程
+sudo ps aux |grep sslocal |grep -v "grep"
+```
+如果报错：
+```jshelllanguage
+dream@dream:~$ sslocal -c /etc/shadowsocks.conf
+INFO: loading config from /etc/shadowsocks.conf
+2019-08-18 12:47:54 INFO     loading libcrypto from libcrypto.so.1.1
+Traceback (most recent call last):
+  File "/usr/local/bin/sslocal", line 11, in <module>
+    load_entry_point('shadowsocks==2.8.2', 'console_scripts', 'sslocal')()
+  File "/usr/local/lib/python2.7/dist-packages/shadowsocks/local.py", line 39, in main
+    config = shell.get_config(True)
+  File "/usr/local/lib/python2.7/dist-packages/shadowsocks/shell.py", line 262, in get_config
+    check_config(config, is_local)
+  File "/usr/local/lib/python2.7/dist-packages/shadowsocks/shell.py", line 124, in check_config
+    encrypt.try_cipher(config['password'], config['method'])
+  File "/usr/local/lib/python2.7/dist-packages/shadowsocks/encrypt.py", line 44, in try_cipher
+    Encryptor(key, method)
+  File "/usr/local/lib/python2.7/dist-packages/shadowsocks/encrypt.py", line 83, in __init__
+    random_string(self._method_info[1]))
+  File "/usr/local/lib/python2.7/dist-packages/shadowsocks/encrypt.py", line 109, in get_cipher
+    return m[2](method, key, iv, op)
+  File "/usr/local/lib/python2.7/dist-packages/shadowsocks/crypto/openssl.py", line 76, in __init__
+    load_openssl()
+  File "/usr/local/lib/python2.7/dist-packages/shadowsocks/crypto/openssl.py", line 52, in load_openssl
+    libcrypto.EVP_CIPHER_CTX_cleanup.argtypes = (c_void_p,)
+  File "/usr/lib/python2.7/ctypes/__init__.py", line 379, in __getattr__
+    func = self.__getitem__(name)
+  File "/usr/lib/python2.7/ctypes/__init__.py", line 384, in __getitem__
+    func = self._FuncPtr((name_or_ordinal, self))
+AttributeError: /lib/x86_64-linux-gnu/libcrypto.so.1.1: undefined symbol: EVP_CIPHER_CTX_cleanup
+```
+这是因为 openssl 升级原因导致的，将 crypto/openssl.py 文件中的 cleanup 改成 reset
+```jshelllanguage
+sudo vim /usr/local/lib/python2.7/dist-packages/shadowsocks/crypto/openssl.py
+```
+
+## 安装 Privoxy
+```jshelllanguage
+sudo apt-get install privoxy -y
+```
+## 配置 Privoxy
+```jshelllanguage
+sudo cp /etc/privoxy/config /etc/privoxy/config.bak
+sudo vim /etc/privoxy/config
+```
+找到 listen-address 确保有这行代码 listen-address 127.0.0.1:8118
+
+找到 forward-socks5 确保有这行代码(没有可以自己加，注意最后的点) forward-socks5 / 127.0.0.1:9050 .
+```jshelllanguage
+listen-address 127.0.0.1:8118
+forward-socks5 / 127.0.0.1:9050 .
+```
+
+## 启动 Privoxy
+```jshelllanguage
+sudo service privoxy start
+sudo service privoxy status
+```
+## 配置代理转发
+
+```jshelllanguage
+vim ~/.bashrc
+#添加如下两行，或直接在命令行中执行如下两行
+export http_proxy="http://127.0.0.1:8118"
+export https_proxy="http://127.0.0.1:8118"
+source ~/.bashrc
+```
+
+## 测试访问 google
+```jshelllanguage
+curl -v www.google.com
+```
 
 ---
     
