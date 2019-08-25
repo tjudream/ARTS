@@ -114,7 +114,83 @@ func maxLevelSum(root *TreeNode) int {
 
 ---
 
-# Tip
+# Tip Ubunt 19.04 上安装 docker
+* 卸载之前的版本
+```jshelllanguage
+sudo apt-get remove docker docker-engine docker.io containerd runc
+```
+* 使用存储库安装
+```jshelllanguage
+sudo apt-get update
+```
+安装对 https 的支持
+```jshelllanguage
+sudo apt-get install \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg-agent \
+    software-properties-common
+```
+添加 apt 的 key
+```jshelllanguage
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+```
+确认已经添加好了 key
+```jshelllanguage
+$ sudo apt-key fingerprint 0EBFCD88
+
+pub   rsa4096 2017-02-22 [SCEA]
+      9DC8 5822 9FC7 DD38 854A  E2D8 8D81 803C 0EBF CD88
+uid           [ unknown] Docker Release (CE deb) <docker@docker.com>
+sub   rsa4096 2017-02-22 [S]
+```
+添加库
+```jshelllanguage
+sudo add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   $(lsb_release -cs) \
+   stable"
+```
+* 安装 Docker
+```jshelllanguage
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io
+```
+* 安装 docker 镜像
+```jshelllanguage
+sudo docker run hello-world
+```
+安装成功
+```jshelllanguage
+dream@dream:~$ sudo docker run hello-world
+Unable to find image 'hello-world:latest' locally
+latest: Pulling from library/hello-world
+1b930d010525: Pull complete 
+Digest: sha256:451ce787d12369c5df2a32c85e5a03d52cbcef6eb3586dd03075f3034f10adcd
+Status: Downloaded newer image for hello-world:latest
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
+```
 
 ## 
 
