@@ -10,19 +10,21 @@ func findAndReplacePattern(words []string, pattern string) []string {
 	lp := len(pattern)
 	for _,word := range words {
 		var m = make(map[uint8]uint8)
+		var n = make(map[uint8]uint8)
 		l := len(word)
 		if  l != lp {
 			continue
 		}
 		flg := true
 		for i := 0; i < l; i++ {
-			if m[pattern[i]] == 0 {
+			if m[pattern[i]] == 0 && n[word[i]] == 0 {
 				m[pattern[i]] = word[i]
+				n[word[i]] = pattern[i]
+			} else if m[pattern[i]] == word[i] && n[word[i]] == pattern[i] {
+				continue
 			} else {
-				if m[pattern[i]] != word[i] {
-					flg = false
-					break
-				}
+				flg = false
+				break
 			}
 		}
 		if flg {
