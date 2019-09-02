@@ -56,13 +56,80 @@ func findAndReplacePattern(words []string, pattern string) []string {
 
 ---
 
-# Review []()
+# Review [Beginner’s Guide to Machine Learning with Python](https://towardsdatascience.com/beginners-guide-to-machine-learning-with-python-b9ff35bc9c51)
+## 0. 机器学习过程的简要概述
+机器学习各个阶段：
+* 数据收集
+* 数据排序
+* 数据分析
+* 算法开发
+* 检查算法生成
+* 利用一种算法进一步得出结论
+
+用于寻找模式的算法分为两类：
+* 无监督学习：对于机器只有输入的数据，机器自己找到数据的模式和数据之间的关系
+* 监督学习：给机器样本数据作为训练集，机器通过训练集找到模式
+
+监督学习算法：
+* 决策树(Decision trees)
+* 支持向量机(Support-vector machine)
+* 朴素贝叶斯分类器(Naive Bayes classifier)
+* k最近邻算法(k-nearest neighbors)
+* 线性回归(linear regression)
+
+## 1. 复习 Python 数学库所需的数学技能
+学习数据分析和机器学习数学基础的三步法：
+1. 用于数据分析的线性代数：标量、向量、矩阵、张量
+2. 数学分析：导数和梯度
+3. 梯度下降：从零开始建立一个简单的神经网络
+
+一些从零建立神经网络的资料：
+* [Neural Network in Python](https://www.amazon.com/Neural-Network-Projects-Python-ultimate/dp/1789138906)
+* [How to build your own Neural Network from scratch in Python](https://towardsdatascience.com/how-to-build-your-own-neural-network-from-scratch-in-python-68998a08e4f6)
+* [Implementing a Neural Network from Scratch in Python — An Introduction.](http://www.wildml.com/2015/09/implementing-a-neural-network-from-scratch/)
+* [Machine Learning for Beginners: An Introduction to Neural Networks](https://victorzhou.com/blog/intro-to-neural-networks/)
+
+## 2. 学习 Python 语法的基础知识
+一些学习资料：
+* [Codecademy](https://www.codecademy.com/)
+* [Learn Python the Hard Way](https://learnpythonthehardway.org/)
+* [Dataquest](https://www.dataquest.io/)
+* [The Python Tutorial](https://docs.python.org/3/tutorial/)
+
+## 3. 发现主要的数据分析库
+Python 中常用的库：
+* [NumPy](https://docs.scipy.org/doc/numpy/user/quickstart.html)
+* [Pandas](https://pandas.pydata.org/pandas-docs/stable/getting_started/10min.html)
+* [Matplotlib](https://matplotlib.org/users/pyplot_tutorial.html)
+* [Scikit-Learn](https://elitedatascience.com/python-machine-learning-tutorial-scikit-learn)
+
+## 4. 开发结构化项目
+一些结构化项目的资源：
+* [Dataquest](https://www.dataquest.io/)
+* [Python for Data Analysis](http://bedford-computing.co.uk/learning/wp-content/uploads/2015/10/Python-for-Data-Analysis.pdf)
+* [Scikit — documentation](https://scikit-learn.org/stable/documentation.html)
+* [CS109](https://cs109.github.io/2015/)
+
+## 5. 做自己的项目
+* [StackOverflow](https://stackoverflow.com/)
+* [Python Documentation](https://docs.python.org/3/)
+
 
 ---
 
-# Tip
+# Tip MySQL 5.6 升级到 5.7 后，提示 "Table 'performance_schema.session_variables' doesn't exist"
 
-## 
+MySQL 5.6 升级到 5.7 后，执行 "show status" 时，提示 "Table 'performance_schema.session_variables' doesn't exist"
+
+## 解决方法
+执行：
+```jshelllanguage
+mysql_upgrade -u root -p --force
+```
+然后重启 MySQL
+```jshelllanguage
+systemctl restart mysqld
+```
 
 ---
     
