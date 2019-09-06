@@ -23,6 +23,7 @@
 * [week21](src/week21/README.md)
 * [week22](src/week22/README.md)
 * [week23](src/week23/README.md)
+* [week24](src/week24/README.md)
 
 
 ***
