@@ -107,6 +107,110 @@ GTID=source_id:transaction_id  #MySQL 官方文档里的定义
 * enforce_gtid_consistency=on
 
 
+在 GTID 模式下，每个事务都与一个 GTID 一一对应。GTID 有两种生成模式，取决于 session 的变量 gtid_next :
+1. gtid_next=automatic 默认值，MySQL 会将 server_uuid:gno 分配给这个事务
+    1. 记录 binlog 时，先记录一行 SET @@SESSION.GTID_NEXT='server_uuid:gno'
+    2. 把此 GTID 加入到 GTID 集合中
+2. 如果 gtid_next 是一个指定的 GTID 的值，比如 set gtid_next='current_gtid', 则有两种可能：
+    1. 如果 current_gtid 已经存在与 GTID 集合中，接下来执行的这个事务会直接被系统忽略
+    2. 如果 current_gtid 没有存在于实例的 GTID 的集合中，就将这个 current_gtid 分配给接下来要执行的事务，
+    也就是说系统不需要给这个新事务生成新的 GTID，因此 gno 不用加 1
+    
+current_gtid 只能给一个事务使用，事务提交后，需要重新 set gtid_next 
+
+MySQL 维护了一个 GTID 集合，用来对应"这个实例执行过的所有事务"
+
+示例：在实例 X 上创建一个表 t
+```sql
+CREATE TABLE `t` (
+  `id` int(11) NOT NULL,
+  `c` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB;
+
+insert into t values(1,1);
+```
+![binlog_4](binlog_4.png)
+事务 begin 之前有一条 SET @@SESSION.GTID_NEXT 命令。同步 binlog 到 X 的从库也会将这两个 GTID 同步过去。
+
+假设 X 是 Y 的从库，Y 上执行了如下命令
+```sql
+insert into t values(1,1);
+```
+且 Y 上这条语句的 GTID=aaaaaaaa-cccc-dddd-eeee-ffffffffffff:10
+
+这时 X 同步 Y 的 insert 语句时，会报主键冲突，这时我们需要在 X 库上这样处理：
+```sql
+set gtid_next='aaaaaaaa-cccc-dddd-eeee-ffffffffffff:10';
+begin;
+commit;
+set gtid_next=automatic;
+start slave;
+```
+执行完这个空事务之后 show master status 的结果
+![show_master_status](show_master_status.png)
+
+Y 上的 GTID 已经加入到了 Executed_Gtid_set 中，这时就不会报主键冲突了
+
+## 基于 GTID 的主备切换
+在 GTID 模式下，备库 B 要设置为新主库 A' 的从库的语法如下：
+```sql
+CHANGE MASTER TO 
+MASTER_HOST=$host_name 
+MASTER_PORT=$port 
+MASTER_USER=$user_name 
+MASTER_PASSWORD=$password 
+master_auto_position=1 
+```
+master_auto_position=1 表示主备关系使用的是 GTID 协议。
+
+假设此刻 A' 的 GTID 集合是 set_a ，B 的是 set_b。
+
+在 B 上执行 start slave 命令，取 binlog 的逻辑：
+1. B 指定主库 A'，基于主备协议建立连接
+2. B 把 set_b 发给 A'
+3. A' 算出 set_a 与 set_b 的差集，即存在于 set_a 且不存在于 set_b 的 GTID 集合，判断 A' 本地是否包含了这个差集需要的所有 binlog 事务：
+    1. 如果不包含，表示 A' 已经把 B 需要的 binlog 给删了，直接返回错误
+    2. 如果确认全部包含，A' 从自己的 binlog 文件里面，找出第一个不在 set_b 的事务，发给 B
+4. 之后就从这个事务开始，往后读文件，按顺序取 binlog 发给 B 去执行
+
+之后这个系统由新的主库A'写入，主库 A' 自己生成的 binlog 中的 GTID 集合格式是: server_uuid_of_A':1-M
+
+如果之前 B 的 GTID 集合是 server_uuid_of_A:1-N, 切换之后变为：server_uuid_of_A:1-N, server_uuid_of_A':1-M
+
+## GTID 和在线的 DDL
+在双 M 结构下，备库执行的 DDL 语句也会传给主库，为了避免传回后对主库造成影响，要通过 set sql_log_bin=off 关掉 binlog
+
+这样操作的话，数据库里是加了索引，但是 binlog 中并没有记录这个操作，会不会导致数据和日志不一致？
+
+两个互为主备关系的库 X 、 Y ，且当前主库是 X，并且都打开了 GTID 模式。主备切换流程：
+1. 在 X 上执行 stop slave
+2. 在 Y 上执行 DDL 语句。这里并不需要关闭 binlog
+3. 执行完成后，查出这个 DDL 语句的 GTID，并记为 server_uuid_of_Y:gno
+4. 到 X 上执行
+    ```sql
+    set GTID_NEXT="server_uuid_of_Y:gno";
+    begin;
+    commit;
+    set gtid_next=automatic;
+    start slave;
+    ```
+    这样做既可以让 Y 的更新有 binlog，同时也可以确保不会在 X 上执行这条更新
+5. 接下来,执行主备切换，然后照着上述流程再执行一遍
+
+## 思考题
+在 GTID 模式下，设置主从关系时，从库执行 start slave 命令后，主库发现需要的 binlog 已经被删掉了，
+导致主备创建不成功，需要怎么处理？
+
+* 答：
+1. 如果业务允许主从不一致，那么可以在主库上先执行 show global variables like 'gtid_purged'，
+得到主库上已经删除的 GTID 集合，假设是 gtid_purged1; 然后先在从库上执行 reset master，
+再执行 set  global gtid_purged='gtid_purged1'; 最后执行 start slave，就会从主库先存的  binlog 
+开始同步。binlog 缺失的那一部分，数据在从库上就可能会有丢失，造成主备不一致
+2. 如果需要主从一致，最好还是通过重新搭建从库来做
+3. 如果有其他的从库保留了全量的 binlog ，可以把新的从库先接到这个保留了全量 binlog 的从库，追上日志以后，如果需要，再接回主库
+4. 如果 binlog 有备份的话，可以先在从库上应用缺失的 binlog，然后再执行 start slave
+
 
 
 
