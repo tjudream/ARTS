@@ -2,24 +2,248 @@
 
 ---
 
-# Algorithm []()
+# Algorithm [5. Longest Palindromic Substring](https://leetcode.com/problems/longest-palindromic-substring/)
 ## 1. 问题描述
+最长回文子串问题。
 
+给定一个字符串 s ,找到 s 中的最长回文子串。s 的最大长度为 1000.
+
+示例1:
+* 输入: "baba"
+* 输出: "bab"
+* 注意: "aba" 也是一个合法的答案
+
+示例2:
+* 输入: "cbbd"
+* 输出: "bb"
 ## 2. 解题思路
+Manacher 算法
+
+1. 解决奇偶串问题，将字符串 s 两端以及字母之间插入一个字符'#',得到新的字符串 s1，则 s1 中所有回文子串都是奇数串
+2. 用数组 p[i] 表示以 s1[i] 为中心的回文字符串的回文半径
+3. 计算 p[i],引入变量 id,maxRight,其中 id 表示最大回文子串的中心位置，maxRight = id + p[id],即最大回文子串的最右边界。
+   
+   如果 maxRight > i , 那么 p[i] >= min(p[2*id - i], maxRight - i)，其中 2*id - i 为 i 关于 id 的对称点
+
+j = 2*id - i 是 i 关于 id 的对称点
+
+* 当 maxRight -i > p[j] 时，以 s1[j] 为中心的回文子串包含在以 s1[id] 为中心的回文子串中，由于 i 和 j 对称，
+以 s1[i] 为中心的回文子串必然包含在以 s1[id] 为中心的回文子串中，所以必有 p[i] = p[j]
+
+* 当 p[j] > maxRight - i 时，以 s1[j] 为中心的回文子串不完全包含在以 s[id] 为中心的回文子串中，基于对称性，以 s[i] 为中心的回文子串，
+其向右至少扩张到 maxRight 的位置，即 p[j] >= maxRight - i. maxRight 之后则只能挨个匹配
+
+* 当 maxRight < i 时，无法对 p[i] 做更多推断，所以从 p[i] = 1 开始向前后遍历
 
 ## 3. 代码
+```go
+func preprocesses(s string) string {
+	var sb strings.Builder
+	sb.WriteRune('#')
+	for _,e := range s {
+		sb.WriteRune(e)
+		sb.WriteRune('#')
+	}
+	return sb.String()
+}
 
+func longestPalindrome(s string) string {
+    if len(s) <= 1{
+		return s
+	}
+	s1 := preprocesses(s)
+	len := len(s1)
+	id,maxRight := 0,0
+	p := make([]int, len)
+
+	maxlen := -1
+	resid := 0
+
+	for i := 1; i < len; i++ {
+		if i < maxRight {
+			p[i] = p[2*id - i]
+			if p[i] > maxRight - i {
+				p[i] = maxRight - i
+			}
+		} else {
+			p[i] = 1
+		}
+
+		for i - p[i] >=0 && i + p[i] < len && s1[i - p[i]] == s1[i + p[i]] {
+			p[i]++
+		}
+		if maxRight < i + p[i] {
+			id = i
+			maxRight = i + p[i]
+		}
+
+		if maxlen < p[i] {
+			maxlen = p[i]
+			resid = id
+		}
+	}
+
+	return strings.Replace(s1[resid - p[resid] + 1: resid + p[resid] - 1], "#", "", -1)
+}
+```
 ## 4. 复杂度分析
+* 时间复杂度: O(n)
+* 空间复杂度: O(n)
 
 ---
 
-# Review []()
+# Review [Introducing TensorFlow Datasets](https://medium.com/tensorflow/introducing-tensorflow-datasets-c7f01f7e19f3)
+TensorFlow 数据集简介
+```python
+import tensorflow_datasets as tfds
+import tensorflow as tf
+
+# tfds works in both Eager and Graph modes
+tf.enable_eager_execution()
+
+# See available datasets
+print(tfds.list_builders())
+
+# Construct a tf.data.Dataset
+ds_train, ds_test = tfds.load(name="mnist", split=["train", "test"])
+
+# Build your input pipeline
+ds_train = ds_train.shuffle(1000).batch(128).prefetch(10)
+for features in ds_train.take(1):
+  image, label = features["image"], features["label"]
+```
+[TensorFlow 数据集](https://github.com/tensorflow/datasets)
+
+## tl;dr
+```python
+# Install: pip install tensorflow-datasets
+import tensorflow_datasets as tfds
+mnist_data = tfds.load("mnist")
+mnist_train, mnist_test = mnist_data["train"], mnist_data["test"]
+assert isinstance(mnist_train, tf.data.Dataset)
+```
+
+tfds.load 和 DatasetBuilder
+
+每个数据集都暴露为一个DatasetBuilder，具有一些特性：
+* 知道从哪里下载数据，以及如何提取数据并将其写入标准格式
+* 如何从硬盘中加载
+* 以及关于数据集的所有信息，如所有特征的名称、类型和形状、每个分割中的记录数量、源url、数据集或相关论文的引用等。
+
+您可以直接实例化任何 DatasetBuilders， 或者通过 tfds.builder 的字符串获取：
+```python
+import tensorflow_datasets as tfds
+
+# Fetch the dataset directly
+mnist = tfds.image.MNIST()
+# or by string name
+mnist = tfds.builder('mnist')
+
+# Describe the dataset with DatasetInfo
+assert mnist.info.features['image'].shape == (28, 28, 1)
+assert mnist.info.features['label'].num_classes == 10
+assert mnist.info.splits['train'].num_examples == 60000
+
+# Download the data, prepare it, and write it to disk
+mnist.download_and_prepare()
+
+# Load data from disk as tf.data.Datasets
+datasets = mnist.as_dataset()
+train_dataset, test_dataset = datasets['train'], datasets['test']
+assert isinstance(train_dataset, tf.data.Dataset)
+
+# And convert the Dataset to NumPy arrays if you'd like
+for example in tfds.as_numpy(train_dataset):
+  image, label = example['image'], example['label']
+  assert isinstance(image, np.array)
+```
+as_dataset() 接收 batch_size 参数，该参数将为你提供批处理的示例，而不是一次只提供一个示例。
+
+对于适合内存的小数据集，可以将设置 batch_size=-1 ，一次性地获取数据集作为 tf.Tensor.
+
+所有的 tf.data.Datasets 可以很容易地转换为NumPy数组的迭代器 tfds.as_numpy()
+
+为了方便，你可以通过 tfds.load 完成上述所有操作.
+```python
+import tensorflow_datasets as tfds
+
+datasets = tfds.load("mnist")
+train_dataset, test_dataset = datasets["train"], datasets["test"]
+assert isinstance(train_dataset, tf.data.Dataset)
+```
+
+## 数据集的版本
+每次数据变更都会增加版本号，但是同一个版本数据集的数据不保证顺序。
+
+## 配置数据集
+使用 BuilderConfigs 配置。
+```python
+# See the built-in configs
+configs = tfds.text.IMDBReviews.builder_configs
+assert "bytes" in configs
+
+# Address a built-in config with tfds.builder
+imdb = tfds.builder("imdb_reviews/bytes")
+# or when constructing the builder directly
+imdb = tfds.text.IMDBReviews(config="bytes")
+# or use your own custom configuration
+my_encoder = tfds.features.text.ByteTextEncoder(additional_tokens=['hello'])
+my_config = tfds.text.IMDBReviewsConfig(
+    name="my_config",
+    version="1.0.0",
+    text_encoder_config=tfds.features.text.TextEncoderConfig(encoder=my_encoder),
+)
+imdb = tfds.text.IMDBReviews(config=my_config)
+```
+
+## 文本数据集和词汇表
+支持3种编码方式：
+* ByteTextEncoder ： 二进制，字符级别的编码
+* TokenTextEncoder ：单词级别的编码
+* SubwordTextEncoder ： 子单词级别的编码，如 [“he”, “llo”, “ “, “wor”, “ld”] 
+```python
+imdb = tfds.builder("imdb_reviews/subwords8k")
+
+# Get the TextEncoder from DatasetInfo
+encoder = imdb.info.features["text"].encoder
+assert isinstance(encoder, tfds.features.text.SubwordTextEncoder)
+
+# Encode, decode
+ids = encoder.encode("Hello world")
+assert encoder.decode(ids) == "Hello world"
+
+# Get the vocabulary size
+vocab_size = encoder.vocab_size
+```
+## 开始使用数据集
+[文档地址](http://tensorflow.org/datasets)
+* [数据集](https://www.tensorflow.org/datasets/datasets)
+* [API 文档](https://www.tensorflow.org/datasets/api_docs/python/tfds)
+* [Colab 向导](https://colab.research.google.com/github/tensorflow/datasets/blob/master/docs/overview.ipynb)
+* [如何添加数据集](https://www.tensorflow.org/datasets/add_dataset)
+* [Github](https://github.com/tensorflow/datasets)
+
 
 ---
 
-# Tip
+# Tip 使用 docker 部署 gerrit
+## 拉取镜像
+```jshelllanguage
+docker pull gerritcodereview/gerrit
+docker pull openfrontier/gerrit
+```
+## 运行 gerrit
+```jshelllanguage
+docker run -ti -p 8080:8080 -p 29418:29418 gerritcodereview/gerrit
 
-## 
+docker run \
+        -e MIGRATE_TO_NOTEDB_OFFLINE=true \
+        -v ~/gerrit_volume:/var/gerrit/review_site \
+        -p 8080:8080 \
+        -p 29418:29418 \
+        -d openfrontier/gerrit
+```
+
 
 ---
     

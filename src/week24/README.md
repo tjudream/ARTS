@@ -182,7 +182,7 @@ docker pull gitlab/gitlab-ce
 ## 启动 gitlab
 ```jshelllanguage
 docker run --detach \
---publish 443:443 --publish 80:80  --publish 22:22 \
+--publish 443:443 --publish 80:80  --publish 10022:22 \
 --name gitlab \
 --memory 4g \
 --restart always \
