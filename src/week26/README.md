@@ -138,3 +138,77 @@ semi-sync 存在的两个问题：
 2. 在持续延迟的情况下，可能出现过度等待的现象
 
 ## 等待主库位点方案
+```sql
+select master_pos_wait(file, pos[, timeout]);
+```
+1. 此命令是在从库上执行的
+2. 参数 file 和 pos 指的是主库上的文件名和位置
+3. timeout 可选，设置为正整数 N 表示这个函数最多等 N 秒
+
+返回结果是 M 表示从命令执行，到应用完 file 和 pos 表示的 binlog 位置，执行了多少个事务
+
+异常返回结果：
+1. 如果执行期间，备库同步线程发生异常，返回 NULL
+2. 如果等待超过 N 秒，返回 -1
+3. 如果刚开始执行的时候，发现已经执行过这个位置，返回 0
+
+![master_pos_wait](master_pos_wait.png)
+先执行 trx1 再执行一个查询的逻辑：
+
+1. trx1 事务更新完成后，马上执行 show master status 得到当前主库执行到的 File 和 Position
+2. 选定一个从库执行查询语句
+3. 在从库上执行 select master_pos_wait(File, Position, 1)
+4. 如果返回值是 >=0 的正整数，则在这个从库执行查询语句
+5. 否则，到主库执行查询语句
+
+这条 select 最多等待 1 秒，如果 1 秒内返回值大于 0，则在从库执行 select，否则退化为在主库执行 select
+## GTID
+```sql
+ select wait_for_executed_gtid_set(gtid_set, 1);
+```
+1. 等待，直到这个库执行的事务中包含传入的 gtid_set, 返回 0
+2. 超时返回 1
+
+MySQL 5.7.6 版本开始，允许在执行完更新类事务后，把这个事务的 GTID 返回给客户端
+
+GTID 的流程：
+1. trx1 事务更新完成后，从返回包直接获取这个事务的 GTID，记为 gtid1
+2. 选定一个从库执行查询语句
+3. 在从库上执行 select wait_for_executed_gtid_set(gtid1, 1)
+4. 如果返回 0，则在这个从库上执行查询语句
+5. 否则，到主库执行查询语句
+
+如果超时后直接查主库，需要业务开发同学来做限流考虑。
+
+流程图如下
+![wait_for_executed_gtid_set](wait_for_executed_gtid_set.png)
+
+要在返回包中带上 GTID，需要设置参数 session_track_gtids=OWN_GTID，然后通过 API
+接口 mysql_session_track_get_first 从返回包中解析出 GTID
+
+MySQL 提供的 [API](https://dev.mysql.com/doc/refman/5.7/en/c-api-functions.html)
+
+修改 MySQL 客户端
+```c++
+const char *data;
+size_t length;
+if (mysql_session_track_get_first(&mysql, SESSION_TRACK_GTIDS, &data, &length) == 0)
+{
+    sprintf(&buff[strlen(buff)], ", GTID: %s", data);
+}
+```
+
+![gtid_result](gtid_result.png)
+
+## 思考题
+采用 GTID 方案，现在需要对主库的一张大表做 DDL，可能会出现什么情况呢？为了避免这种情况要怎么做？
+* 回答：
+假设这条语句在主库需要执行 10 分钟，提交后传到备库也要执行 10 分钟。
+那么，在主库 DDL 之后再提交的事务的 GTID，去备库查的时候，就会等 10 分钟才出现。
+
+这个读写分离机制在 10 分钟内都会超时，然后都走主库。
+
+这种预期的操作，应该在业务低峰期进行，确保主库能够支撑所有业务查询，然后把读请求都切换到主库，
+再在主库上做 DDL。等备库延迟追上后，再把读请求切回备库。
+
+也可以备库先做，再切主库
