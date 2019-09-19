@@ -90,9 +90,36 @@ if p[j+1] == '*' {
 ```
        
 ## 3. 代码
+```go
+func isMatch(s string, p string) bool {
+	if s == p {
+		return true
+	}
 
+    lens,lenp := len(s),len(p)
+    var dp [][]bool
+	dp = make([][]bool, lens + 1)
+	for i := 0; i < lens + 1; i++ {
+		dp[i] = make([]bool, lenp + 1)
+	}
+
+	dp[lens][lenp] = true
+	for i := lens; i >= 0; i-- {
+	    for j := lenp - 1; j >= 0; j-- {
+	        first_match := i < lens &&  (p[j] == s[i] || p[j] == '.')
+	        if (j + 1 < lenp && p[j+1] == '*') {
+				dp[i][j] =  dp[i][j+2] || first_match && dp[i+1][j];
+	        } else {
+	            dp[i][j] = first_match && dp[i+1][j+1];
+	        }
+	    }
+	}
+	return dp[0][0]
+}
+```
 ## 4. 复杂度分析
-
+* 时间复杂度 O(SP) S 为字符串 s 的长度，P 为模式串 p 的长度
+* 空间复杂度 O(SP)
 ---
 
 # Review []()
