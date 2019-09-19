@@ -52,15 +52,43 @@
 ## 2. 解题思路
 动态规划
 
-设二维 boolean 型数组 dp[i][j] 表示 p[0:j] 是否匹配 s[0:i]
-1. 如果 p[j] == s[i], 则 dp[i][j] = dp[i-1][j-1]
-2. 如果 p[j] == '.' , 则 dp[i][j] = dp[i-1][j-1]
-3. 如果 p[j] == '*' , 则
-    * (1) 如果 p[j-1] != s[i], 则 dp[i][j] = dp[i][j-2]  重复 0 次
-    * (2) 如果 p[j-1] == s[i] 或者 p[j-1] == '.'，那么
-        * i. dp[i][j] = dp[i-1][j] 重复多次
-        * 或 ii. dp[i][j] = dp[i][j-1] 重复 1 次
-        * 或 iii. dp[i][j] = dp[i][j-2] 重复 0 次
+设二维 boolean 型数组 dp[i][j] 表示 p[j:len(p)] 是否匹配 s[i:len(s)]
+1. 如果 p[j] == s[i], 则 dp[i][j] = dp[i+1][j+1]
+2. 如果 p[j] == '.' , 则 dp[i][j] = dp[i+1][j+1]
+3. 如果 p[j+1] == '*' , 则
+    * (1) 如果 p[j] != s[i], 则 dp[i][j] = dp[i][j+2]  重复 0 次
+    * (2) 如果 p[j] == s[i] 或者 p[j] == '.'，那么
+        * i. dp[i][j] = dp[i+1][j] 重复1~多次
+        * 或 ii. dp[i][j] = dp[i][j+2] 重复 0 次
+
+* 整理：
+
+初始值: dp[len(s)][len(p)] = true , 空串匹配空串
+
+需要求 dp[0][0]
+
+1. 第一个字符串是否匹配： 
+```java
+bool firstMath = (p[j] == s[i] || p[j] == '.');
+```
+2. 判断 p 的后一个字符是否为'*'
+```java
+if p[j+1] == '*' {
+    /*
+    if (first_match) {
+        dp[i][j] = dp[i+1][j] // 对应情况 3.（2）.i
+    } else {
+        dp[i][j] = dp[i][j+2] // 对应情况 3.（1）,3.(2).ii
+    }
+    =====>>
+    dp[i][j] = dp[i][j+2](
+     */
+    dp[i][j] =  dp[i][j+2] || first_match && dp[i+1][j];
+} else {
+    dp[i][j] = first_match && dp[i+1][j+1]; // 对应情况 1，2
+}
+```
+       
 ## 3. 代码
 
 ## 4. 复杂度分析
