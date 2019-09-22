@@ -122,11 +122,64 @@ func isMatch(s string, p string) bool {
 * 空间复杂度 O(SP)
 ---
 
-# Review []()
+# Review [Things You Should Never Do, Part I](https://www.joelonsoftware.com/2000/04/06/things-you-should-never-do-part-i/)
+* 不要从头重写代码
+
+对于很多公司来说，从头重写代码是一个战略性的错误。
+
+代码虽然很长、很丑、很复杂，甚至没人能看懂，但是它是可以工作的，是可以良好运行的。
+
+之所以代码看上去很乱，很可能是因为前辈们修了很多 bug 导致的。
+
+程序员之所以喜欢重构代码主要是因为： "It’s harder to read code than to write it."（读代码比写代码要困难）
+
+现在看上去很乱的代码集齐了很多前人的智慧，如果你放弃这些代码从头开始，等于抛弃了这些前人的智慧。
+
+当程序员说代码太乱了的时候，他们犯了3个错误：
+* (1) 架构问题。比如代码分层不清。这个问题可以通过重构，逐步修复。
+* (2) 性能问题。可以通过优化，或者局部重写来修复这个问题。而没有必要完全从头开始
+* (3) 代码难看。可以通过引入编码规范解决。
+
+你没有理由相信从头开始写就会比前人做的更好。
+
+你可以推翻你前两周写的一个函数，重写一遍。你也可以简化你之前写的类。但是永远不要把整个项目从头做一遍。
 
 ---
 
-# Tip 
+# Tip 使用 docker 部署 jenkins
+* 拉取 jenkins 镜像
+```jshelllanguage
+docker pull jenkins
+```
+* 创建 jenkins 目录
+```jshelllanguage
+mkdir ~/jenkins
+```
+* 运行 jenkins
+```jshelllanguage
+docker run -d -p 8002:8080 -v ~/jenkins:/var/jenkins_home --name jenkins --restart=always jenkins
+```
+
+* 查看 jenkins
+```jshelllanguage
+docker logs -f jenkins
+```
+
+在浏览器中查看：
+```jshelllanguage
+http://127.0.0.1:8002
+```
+![jenkins1](jenkins1.png)
+按照提示找到密码
+
+![jenkins2](jenkins2.png)
+自定义安装，安装需要的插件
+
+![jenkins3](jenkins3.png)
+创建管理员
+
+![jenkins4](jenkins4.png)
+安装完成
 
 ## 
 
