@@ -26,11 +26,84 @@
 * 空间复杂度 O(n) 栈的空间
 
 #### 算法2 : DP 动态规划
+有效括号子串必然以 ')' 结尾，以 '(' 开始
 
+令dp[i] 表示 s[0:i] 的中以 s[i] 结尾的最长有效括号数，dp[i] 初始为 0
+1. 如果 s[i] = ')' && s[i-1] = '(',则 dp[i] = dp[i-2] + 2 , s[i] 和 s[i-1] 组成一个有效括号
+    * 例如 :
+        * "(()()" dp[2] = 2,dp[3] = 0, dp[4] = dp[2] + 2 = 4
+        * "())()" dp[1] = 2, dp[2] = 0, dp[4] = dp[2] + 2 = 2
+2. 如果 s[i] = ')' && s[i-1] = ')',则字符串看起来 "...))"
+    * 如果 s[i - dp[i-1] - 1] = '(',那么 dp[i] = dp[i-1] + dp[i - dp[i-1] - 2] + 2, 例如：
+        * "((())" s[3]=')',s[4]=')', dp[3] = 2, s[4 - dp[3] - 1] = s[1] = '(', dp[4]=dp[3] +dp[4-dp[3]-2] + 2 = 2 + dp[0] + 2 = 4
+    * 解释：dp[i-1] 是以s[i-1]结尾的有效括号数，s[i-dp[i-1]-1] 是这个有效括号串的前一个字符，如果是 '(' 则正好与s[i] 配对，
+    那么 dp[i] = dp[i-1] + dp[i - dp[i-1] -2] + 2, 其中 2 是s[i-dp[i-1]-1] 和 s[i] 组成的合法括号串，长度为2，
+    dp[i-1] 是 s[i-dp[i-1]-2] 到 s[i-1] 的有效括号串数，
+    dp[i-dp[i-1]-1] 是以 s[i-dp[i-1]] 结尾的有效括号串数
+    
+* 时间复杂度 : O(n)
+* 空间复杂度 : O(n)
+#### 算法3 : 栈
+1. 初始入栈 -1 
+2. 遍历字符串，遇到 '(' 入栈
+3. 遇到 ')' 出栈，
+    * 如果此时栈空，则当前字符串索引的位置入栈
+    * 如果此时栈不空，则计算当前字符串索引位置与栈顶元素之间的差值，并与最大值比较，同时记录最大值
 
+* 时间复杂度 : O(n)
+* 空间复杂度 : O(n) 栈占用的空间，最大为整个字符串的长度
+#### 算法4 : 空间复杂度 O(1) 的算法
+1. 从左到右遍历字符串，遇到 '(', left + 1，遇到 ')', right + 1
+    * 如果 left == right， 计算 maxNum = max(maxNum, 2 * left)
+    * 如果 right >= left 则为非法字符串，重置 left 和 right 为 0
+2. 对于 "(()" 以上方法无效，所以还需要反向遍历一遍，即从右向左遍历一遍
+
+* 时间复杂度 : O(2n) = O(n)
+* 空间复杂度 : O(1) 只需要 3 个变量
+    
 ## 3. 代码
+#### 算法4
+```go
+func longestValidParentheses(s string) int {
+    left,right,max,lens := 0,0,0,len(s)
 
+	for i := 0; i < lens; i++ {
+		if s[i] == '(' {
+			left++
+		} else {
+			right++
+		}
+		if left == right {
+			newMax := 2 * left
+			if newMax > max {
+				max = newMax
+			}
+		} else if right >= left {
+			left,right = 0,0
+		}
+	}
+
+	left,right = 0,0
+	for i := lens - 1; i >= 0; i-- {
+		if s[i] == '(' {
+			left++
+		} else {
+			right++
+		}
+		if left == right {
+			newMax := 2*left
+			if newMax > max {
+				max = newMax
+			}
+		} else if left >= right {
+			left,right = 0,0
+		}
+	}
+	return max
+}
+```
 ## 4. 复杂度分析
+详见算法分析
 
 ---
 
