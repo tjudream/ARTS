@@ -107,7 +107,68 @@ func longestValidParentheses(s string) int {
 
 ---
 
-# Review []()
+# Review [Building a Question-Answering System from Scratch— Part 1](https://towardsdatascience.com/building-a-question-answering-system-part-1-9388aadff507)
+## SQuAD 数据集
+Stanford Question Answering Dataset (SQuAD) 斯坦福问答数据集是一个新的阅读理解数据集。
+包含 100000+ 的问答和 500+ 篇文章。
+## 问题
+对于训练集中的每个观察，都有 context(上下文)、problem(问题)和 text(文本)
+![cpt](cpt.png)
+目标是对任何给定的新的context(上下文)和problem(问题)，找到text(文本) 即问题的答案
+
+把这个问题分成两步:
+1. 找到包含正确答案的句子(黄色部分)
+2. 从句子中找到正确答案(绿色部分)
+
+## 介绍  Infersent, Facebook Sentence Embedding
+各种映射向量：word2vec, doc2vec, food2vec, node2vec, sentence2vec
+
+bow : bag of words 词包法，将一个句子中所有单词的向量取平均值
+
+sentence2vec 获取方式：一个句子可以分为多个单词 word，每个 word 的向量可以通过  glove embeddings 方式获取，
+计算各个向量的平均值得到句子向量的平均值。 
+
+Infersent : 通过训练集创建一张单词表，用这张单词表训练 infersent 模型。一旦模型训练完成，将句子作为编码器函数的输入，
+该函数将返回4096维向量，而不考虑句子中的单词数量。
+
+```python
+import torch
+
+infersent = torch.load('InferSent/encoder/infersent.allnli.pickle', map_location=lambda storage, loc: storage)
+infersent.set_glove_path("InferSent/dataset/GloVe/glove.840B.300d.txt")
+
+infersent.build_vocab(sentences, tokenize=True)
+
+dict_embeddings = {}
+for i in range(len(sentences)):
+    print(i)
+    dict_embeddings[sentences[i]] = infersent.encode([sentences[i]], tokenize=True)
+```
+
+使用 sentence embedding 解决找到相关句子的问题
+
+首先通过 [Spacy](https://spacy.io/usage/spacy-101) 或 [Textblob](http://textblob.readthedocs.io/en/dev/) 
+将 context 划分成若干个句子
+
+context :
+![context-sentense](context-sentence.png)
+
+textblob 法拆分成了 7 个句子
+![textblob](textblob.png)
+
+spacy 法拆分成了 12 个句子
+![spacy](spacy.png)
+
+* 使用 Infersent 模型获取每个句子和问题的向量
+* 根据每个句子-问题对的余弦相似度和欧氏距离创建距离等特征
+## 模型
+* 使用无监督学习找到距离问题最短距离的句子：
+    * 用欧氏距离法，精确度大概在 45% 左右
+    * 用余弦相似度法，精确度在 45% ~ 63%
+* 监督学习——训练集是一个棘手的问题，对于验证集合，各个方法的精确度
+    * 多项逻辑回归法 65%
+    * 随机森林 67%
+    * XGBoost  69%
 
 ---
 
