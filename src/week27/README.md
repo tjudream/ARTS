@@ -172,9 +172,76 @@ spacy 法拆分成了 12 个句子
 
 ---
 
-# Tip
+# Tip SpringBoot 集成 swagger
+## 1. 通过  [Spring Intializr](https://start.spring.io/) 生成应空的 spring boot 项目
+## 2. 在 pom.xml 中添加依赖
+```xml
+<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger2</artifactId>
+			<version>2.9.2</version>
+		</dependency>
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger-ui</artifactId>
+			<version>2.9.2</version>
+		</dependency>
+```
+## 3. 新建 config 包，并创建 Swagger 配置类 SwaggerConfig
+```java
+@Configuration
+@EnableSwagger2
+public class SwaggerConfig {
+    @Bean
+    public Docket api() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .apiInfo(getApiInfo())
+                .select()
+                .apis(RequestHandlerSelectors.any())
+                .paths(PathSelectors.any())
+                .build();
+    }
+    private ApiInfo getApiInfo() {
+        // 联系人信息
+        Contact contact = new Contact("tjudream","https://github.com/tjudream", "laomeng_boy@163.com");
+        return new ApiInfoBuilder()
+                .title("Spring Boot 集成 Swagger") // 标题
+                .description("Spring Boot 集成 Swagger 的 demo 工程") // 描述信息
+                .version("1.0.0")  //版本
+                .license("Apache 2.0")
+                .licenseUrl("http://www.apache.org/licenses/LICENSE-2.0")
+                .contact(contact)
+                .build();
+    }
+}
+```
+## 4. 新建 controller 包，并新建 controller 类
+```java
+@RestController("/heart")
+public class HeartBeatController {
 
-## 
+    @ApiOperation(value = "心跳检查", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "error: 0 正确, 1 mq出错, 2 redis出错, 4 db出错")
+    })
+    @GetMapping("/app")
+    public Map isAlive() {
+        Map<String,Integer> map = new HashMap<>();
+        map.put("status", 0);
+        return map;
+    }
+}
+```
+## 5. 启动工程，运行 DemoApplication
+在浏览器中访问地址： [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+
+![swagger](swagger.png)
+
+## 6. 工程代码 [spring-boot-swagger](https://github.com/tjudream/spring-boot-swagger)
 
 ---
     
