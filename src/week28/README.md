@@ -51,9 +51,39 @@ p 需要匹配 s 的整个串，而非部分
 
 
 ## 3. 代码
+```go
+func isMatch(s string, p string) bool {
+	if s == p {
+		return true
+	}
+	lens,lenp := len(s),len(p)
+	var dp [][]bool
+	dp = make([][]bool, lens + 1)
+	for i := 0; i < lens + 1; i++ {
+		dp[i] = make([]bool, lenp + 1)
+	}
 
+	dp[0][0] = true
+	for j := 1; j <= lenp; j++ {
+		if p[j-1] == '*' {
+			dp[0][j] = dp[0][j-1]
+		}
+	}
+	for i := 1; i <= lens; i++ {
+		for j := 1; j <= lenp; j++ {
+			if p[j-1] == '?' || s[i-1] == p[j-1] {
+				dp[i][j] = dp[i-1][j-1]
+			} else if p[j-1] == '*' {
+				dp[i][j] = dp[i][j-1] || dp[i-1][j]
+			}
+		}
+	}
+	return dp[lens][lenp]
+}
+```
 ## 4. 复杂度分析
-
+* 时间复杂度 : O(N*M) N 为字符串 s 的长度， M 为 p 的长度
+* 空间复杂度 : O(N*M)
 
 ---
 
