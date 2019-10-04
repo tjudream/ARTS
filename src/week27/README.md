@@ -245,7 +245,7 @@ public class HeartBeatController {
 
 ---
     
-# Share 29 | 如何判断一个数据库是不是出问题了？ -- 极客时间 MySQL实战45讲
+# Share 29 如何判断一个数据库是不是出问题了？ -- 极客时间 MySQL实战45讲
 ## select 1 判断
 select 1 只能判断数据库的进程还在，并不能说明没有问题。
 ```sql
