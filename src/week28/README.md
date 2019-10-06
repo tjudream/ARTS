@@ -112,8 +112,28 @@ FP 的简单定义: 引用透明 —— 没有重新分配值
 
 ---
 
-# Tip
- 
+# Tip 用 virtualenv 创建 python 的虚拟环境
+1. 安装 virtualenv
+```ecmascript 6
+pip install virtualenv
+```
+2. 创建项目目录
+```sbtshell
+mkdir myproject
+cd myproject
+```
+3. 创建 Python 虚拟环境
+```sbtshell
+virtualenv --system-site-packages -p python ./venv
+```
+
+4. 使用虚拟环境
+```sbtshell
+source ./venv/Scritps/activate
+pip list
+```
+![virtualenv](virtualenv.png)
+
 
 ---
     
