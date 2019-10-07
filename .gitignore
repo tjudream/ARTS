@@ -2,3 +2,4 @@
 gosrc
 output
 .DS_Store
+.tags*
