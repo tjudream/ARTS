@@ -58,11 +58,49 @@ func maxSubArray(nums []int) int {
 
 ---
 
-# Review []()
+# Review [Text Summarization using Deep Learning](https://towardsdatascience.com/text-summarization-using-deep-learning-6e379ed2e89c)
+使用机器学习生成文本摘要
+
+## 简介
+摘要有两种类型：
+1. 抽取式摘要——从段落中抽取内容并进行重排序
+2. 抽象式摘要——理解含义，并用自己的语言描述
+
+生成摘要的模型 ——  [Pointer Generator Network](https://arxiv.org/abs/1704.04368)
+
+[Pointer Generator 博客](http://www.abigailsee.com/2017/04/16/taming-rnns-for-better-summarization.html) 
+
+文本摘要的评估指标——Rouge score
+* 突出显示摘要和文本中重叠的单词
+* Rouge 1 测量摘要和文本中单个单词的重叠
+* Rouge 2 测量摘要和文本之间的 bi 图重叠
+
+## 机器学习生成摘要
+![encoder-decoder](encoder-decoder.png)
+seq2seq 模型
+1. 编码 —— Bi-directional LSTM 层（红色部分）从文本中提取信息。每次读取一个单词。
+2. 解码 —— Uni-directional LSTM 层（黄色部分）每次生成一个单词的摘要
+3. 注意机制
+
+此模型存在两个问题：
+1. 有时摘要不准确
+2. 摘要自我重复
+
+pointer generator 模型可以解决这些问题。
+
+pointer-generator 与 seq2seq 模型相比具有以下优点：
+* 使得从文本中复制单词更简单
+* 可以从文本中复制词汇表以外的单词
+* 更快的迭代速度，更少的迭代次数，就能达到与 seq2seq 同样的性能
+
+## 结果
+用 Tensorflow 实现的这个模型，用 CNN/Daily Mail 数据集进行训练，获得的 Rouge-1 评分为 0.38
+
+[代码](https://github.com/abisee/pointer-generator)
 
 ---
 
-# Tip
+# Tip 
 
 
 ---
