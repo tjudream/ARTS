@@ -100,7 +100,45 @@ pointer-generator 与 seq2seq 模型相比具有以下优点：
 
 ---
 
-# Tip 
+# Tip 用 Spring-ldap 连接 LDAP
+1. 引入 spring-ldap 依赖
+```xml
+<dependency>
+    <groupId>org.springframework.ldap</groupId>
+    <artifactId>spring-ldap-core</artifactId>
+    <version>2.3.2.RELEASE</version>
+</dependency>
+```
+2. 配置并请求 LDAP
+```java
+        /**
+        * 配置 ldap
+        */
+        String ldapURL = "ldap://127.0.0.1:389";
+        String dn = "DC=tjudream,DC=com";
+        String ldapAdmin = "admin@tjudream.com";
+        String ldapPassword = "123456";
+        LdapContextSource ldapContextSource = new LdapContextSource();
+        //配置url 
+        ldapContextSource.setUrl(ldapURL);
+        ldapContextSource.setBase(dn);
+        ldapContextSource.setUserDn(ldapAdmin);
+        ldapContextSource.setPassword(ldapPassword);
+        ldapContextSource.afterPropertiesSet();
+        LdapTemplate ldapTemplate = new LdapTemplate(ldapContextSource);
+        
+        // 查询 ldap
+        List<String> list = ldapTemplate.search(
+                query().where("objectclass").is("person"),
+                new AttributesMapper<String>() {
+                    @Override
+                    public String mapFromAttributes(Attributes attrs)
+                            throws NamingException {
+                        return attrs.get("cn").get().toString();
+                    }
+                });
+        list.forEach(System.out::println);
+```
 
 
 ---
