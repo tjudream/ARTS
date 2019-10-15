@@ -26,14 +26,37 @@
 ## 2. 解题思路
 dp[i,j] 表示从 (0,0) 走到 (i,j) 的路径数
 
-dp[0,0] = 0
+dp[i,0] = 1, dp[0,j] = 1
 
-dp[i,j] = 
+dp[i,j] = d[i-1,j] + d[i,j-1]
+
+最终求出 dp[m-1,n-1]
 
 ## 3. 代码
-
+```go
+func uniquePaths(m int, n int) int {
+    var dp [][]int
+    dp = make([][]int, m)
+    for i := 0; i < m; i++ {
+    	dp[i] = make([]int, n)
+    }
+    for i := 0; i < m; i++ {
+        dp[i][0] = 1
+    }
+    for j := 0; j < n; j++ {
+        dp[0][j] = 1
+    }
+    for i := 1; i < m; i++ {
+        for j := 1; j < n; j++ {
+            dp[i][j] = dp[i-1][j] + dp[i][j-1]
+        }
+    }
+    return dp[m-1][n-1]
+}
+```
 ## 4. 复杂度分析
-
+* 时间复杂度 : O(m*n)
+* 空间复杂度 : O(m*n)
 ---
 
 # Review []()
