@@ -59,12 +59,35 @@ func uniquePaths(m int, n int) int {
 * 空间复杂度 : O(m*n)
 ---
 
-# Review []()
+# Review [Why Coding Your Own Makes You a Better Developer](https://medium.com/better-programming/why-coding-your-own-makes-you-a-better-developer-5c53439c5e4a)
+为什么自己写代码会让你成为更好的开发者。
+
+重复造轮子才能有更深的理解。
+
+## 开发人员认为抽象是利索当然的
+## 了解你使用的源代码
+深入了解源码及其原理，帮助你深入了解如何编程。帮你成为更好的程序员。
+## 重新造轮子
+自己编码实现一个已有的方案，是最佳的学习方式。
 
 ---
 
-# Tip
- 
+# Tip Tomcat 特殊字符报 400 错误
+http 请求 tomcat 报 400 错误
+```log
+org.apache.coyote.http11.Http11Processor.service Error parsing HTTP request header
+ Note: further occurrences of HTTP header parsing errors will be logged at DEBUG level.
+ java.lang.IllegalArgumentException: Invalid character found in the request target. The valid characters are defined in RFC 7230 and RFC 3986
+```
+[RFC 3986](https://www.ietf.org/rfc/rfc3986) 规范定义了Url中只允许包含英文字母（a-zA-Z）、数字（0-9）、-_.~4个特殊字符以及所有保留字符 ! * ’ ( ) ; : @ & = + $ , / ? # [ ]
+
+url 中如果传 json，包含 {,} 等特殊字符就会直接报 400
+
+解决此问题需要修改 tomcat 的配置，在 catalina.properties 中添加
+```properties
+tomcat.util.http.parser.HttpParser.requestTargetAllow=|{}
+```
+然后重启 tomcat 即可
 
 ---
     
