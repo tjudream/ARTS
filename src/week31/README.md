@@ -2,14 +2,101 @@
 
 ---
 
-# Algorithm []()
+# Algorithm [63. Unique Paths II](https://leetcode.com/problems/unique-paths-ii/)
 ## 1. 问题描述
+唯一路径
+
+给定一个 m * n 的棋盘
+
+一个机器人初始在左上角，只能向右或向下移动，其目标是移动到右下角。
+
+路径上存在障碍物的情况下，共有多少可能的唯一路径？
+
+障碍物和空格用 1 和 0 来表示
+
+#### 示例 1：
+* 输入 :
+```code
+    [
+        [0,0,0],
+        [0,1,0],
+        [0,0,0]
+    ]
+```
+* 输出 : 2
+* 解释 : 
+    1. Right -> Right -> Down -> Down
+    2. Down -> Down -> Right -> Right
 
 ## 2. 解题思路
+dp[i,j] 表示从 (0,0) 走到 (i,j) 的路径数
+```java
+if dp[0,0] =1 return 0
+dp[0,0]=1
+
+if obstacleGrid[k,0]=1 then 
+    dp[i,0] = 1 (i < k)
+    dp[j,0] = 0 (j >= k)
+if obstacleGrad[0,k]=1 then
+    dp[0,i] = 1 (i < k)
+    dp[0,j] = 0 (j >=k)
+if obstacleGrad[i-1,j] = 1 && obstacleGrad[i,j-1] = 1 then
+    dp[i,j] = 0
+else if obstacleGrad[i-1,j] = 1 then
+    dp[i,j] = dp[i,j-1]
+else if obstacleGrad[i,j-1] = 1 then
+    dp[i,j] = dp[i-1,j]
+else     
+    dp[i,j] = dp[i-1,j] + dp[i,j-1]
+```
+最终求出 dp[m-1,n-1]
 
 ## 3. 代码
-
+```go
+if obstacleGrid[0][0] == 1 {
+        return 0
+    }
+    m,n := len(obstacleGrid), len(obstacleGrid[0])
+    var dp [][]int
+    dp = make([][]int, m)
+    for i := 0; i < m; i++ {
+        dp[i] = make([]int, n)
+    }
+    dp[0][0] = 1
+    for i := 1; i < n; i++ {
+        if obstacleGrid[0][i] == 1 {
+            break
+        }
+        dp[0][i] = 1
+    }
+    for i := 1; i < m; i++ {
+        if obstacleGrid[i][0] == 1 {
+            break
+        }
+        dp[i][0] = 1
+    }
+    for i := 1; i < m; i++ {
+        for j := 1; j < n; j++ {
+            if obstacleGrid[i][j] == 1 {
+                dp[i][j] = 0
+                continue
+            }
+            if obstacleGrid[i-1][j] == 1 && obstacleGrid[i][j-1] == 1 {
+                dp[i][j] = 0
+            } else if obstacleGrid[i-1][j] == 1 {
+                dp[i][j] = dp[i][j-1]
+            } else if obstacleGrid[i][j-1] == 1 {
+                dp[i][j] = dp[i-1][j]
+            } else {
+                dp[i][j] = dp[i][j-1] + dp[i-1][j]
+            }
+        }
+    }
+    return dp[m-1][n-1]
+```
 ## 4. 复杂度分析
+* 时间复杂度 : O(m*n)
+* 空间复杂度 : O(m*n)
 
 ---
 
