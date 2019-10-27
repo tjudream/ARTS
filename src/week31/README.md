@@ -100,12 +100,333 @@ if obstacleGrid[0][0] == 1 {
 
 ---
 
-# Review []()
+# Review [How to (quickly) Build a Tensorflow Training Pipeline](https://towardsdatascience.com/how-to-quickly-build-a-tensorflow-training-pipeline-15e9ae4d78a0)
+## Tensorflow 模型使用数据的 3 种方式：如何正确的使用？
+1. 使用 feed_dict 命令。其缺点是性能差，只能使用 python 加载数据到内存，不能使用多线程。但是在某些情况下是很好的解决方案。
+2. 使用 TfRecords。使用 TfRecords, 10 次有 9 次都是糟糕的选择。
+3. 使用 tensorflow 的 tf.data.Dataset 对象。
+
+## 基本的人脸识别
+输入是两张图片，输出是 1 或者 0，其中 1 表示他们是同一个人，0 表示不是同一个人。
+model.py
+```python
+import tensorflow as tf
+from tensorflow import Tensor
+
+
+class Inputs(object):
+    def __init__(self, img1: Tensor, img2: Tensor, label: Tensor):
+        self.img1 = img1
+        self.img2 = img2
+        self.label = label
+
+class Model(object):
+    def __init__(self, inputs: Inputs):
+        self.inputs = inputs
+        self.predictions = self.predict(inputs)
+        self.loss = self.calculate_loss(inputs, self.predictions)
+        self.opt_step = tf.train.AdamOptimizer(learning_rate=0.001).minimize(self.loss)
+
+    def predict(self, inputs: Inputs):
+        with tf.name_scope("image_substraction"):
+            img_diff = (inputs.img1 - inputs.img2)
+            x = img_diff
+        with tf.name_scope('conv_relu_maxpool'):
+            for conv_layer_i in range(5):
+                x = tf.layers.conv2d(x,
+                                     filters=20 * (conv_layer_i + 1),
+                                     kernel_size=3,
+                                     activation=tf.nn.relu)
+                x = tf.layers.max_pooling2d(x,
+                                            pool_size=3,
+                                            strides=2)
+        with tf.name_scope('fully_connected'):
+            for conv_layer_i in range(1):
+                x = tf.layers.dense(x,
+                                    units=200,
+                                    activation=tf.nn.relu)
+        with tf.name_scope('linear_predict'):
+            predicted_logits = tf.layers.dense(x, 1, activation=None)
+
+        return tf.squeeze(predicted_logits)
+
+    def calculate_loss(self, inputs: Inputs, prediction_logits: Tensor):
+        with tf.name_scope('calculate_loss'):
+            return tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=inputs.label,
+                                                                          logits=prediction_logits))
+```
+
+## 数据
+数据集: [人脸数据库](http://vis-www.cs.umass.edu/lfw/lfw.tgz)
+```xpath
+/lfw
+/lfw/Dalai_Lama/Dalai_Lama_0001.jpg
+/lfw/Dalai_Lama/Dalai_Lama_0002.jpg
+...
+/lfw/George_HW_Bush/George_HW_Bush_0001.jpg
+/lfw/George_HW_Bush/George_HW_Bush_0002.jpg
+...
+```
+生成同一个人的图片对
+pair_generator.py
+```python
+import os
+import glob
+import random
+
+
+class PairGenerator(object):
+    def __init__(self, lfw_path='resources' + os.path.sep + 'lfw'):
+        self.all_people = self.generate_all_people_dict(lfw_path)
+
+    def generate_all_people_dict(self, lfw_path):
+        # generates a dictionary between a person and all the photos of that person
+        all_people = {}
+        for person_folder in os.listdir(lfw_path):
+            person_photos = glob.glob(lfw_path + os.path.sep + person_folder + os.path.sep + '*.jpg')
+            all_people[person_folder] = person_photos
+        return all_people
+
+    def get_next_pair(self):
+
+        while True:
+            # draw a person at random
+            person1 = random.choice(self.all_people)
+            # flip a coin to decide whether we fetch a photo of the same person vs different person
+
+            same_person = random.random() > 0.5
+            if same_person:
+                person2 = person1
+            else:
+                person2 = random.choice(self.all_people)
+
+            person1_photo = random.choice(self.all_people[person1])
+            person2_photo = random.choice(self.all_people[person2])
+            yield ({'person1': person1_photo, 
+                    'person2': person2_photo, 
+                    'label': same_person})
+
+```
+
+## Tensorflow 数据管道
+建立数据管道
+tf_dataset.py 
+```python
+import tensorflow as tf
+from .pair_generator import PairGenerator
+from .model import Inputs
+
+
+class Dataset(object):
+    img1_resized = 'img1_resized'
+    img2_resized = 'img2_resized'
+    label = 'same_person'
+
+    def __init__(self, generator=PairGenerator()):
+        self.next_element = self.build_iterator(generator)
+
+    def build_iterator(self, pair_gen: PairGenerator):
+        batch_size = 10
+        prefetch_batch_buffer = 5
+
+        dataset = tf.data.Dataset.from_generator(pair_gen.get_next_pair,
+                                                 output_types={PairGenerator.person1: tf.string,
+                                                               PairGenerator.person2: tf.string,
+                                                               PairGenerator.label: tf.bool})
+        dataset = dataset.map(self._read_image_and_resize)
+        dataset = dataset.batch(batch_size)
+        dataset = dataset.prefetch(prefetch_batch_buffer)
+        iter = dataset.make_one_shot_iterator()
+        element = iter.get_next()
+
+        return Inputs(element[self.img1_resized],
+                      element[self.img2_resized],
+                      element[PairGenerator.label])
+
+    def _read_image_and_resize(self, pair_element):
+        target_size = [128, 128]
+        # read images from disk
+        img1_file = tf.read_file(pair_element[PairGenerator.person1])
+        img2_file = tf.read_file(pair_element[PairGenerator.person2])
+        img1 = tf.image.decode_image(img1_file)
+        img2 = tf.image.decode_image(img2_file)
+
+        # let tensorflow know that the loaded images have unknown dimensions, and 3 color channels (rgb)
+        img1.set_shape([None, None, 3])
+        img2.set_shape([None, None, 3])
+
+        # resize to model input size
+        img1_resized = tf.image.resize_images(img1, target_size)
+        img2_resized = tf.image.resize_images(img2, target_size)
+
+        pair_element[self.img1_resized] = img1_resized
+        pair_element[self.img2_resized] = img2_resized
+        pair_element[self.label] = tf.cast(pair_element[PairGenerator.label], tf.float32)
+
+        return pair_element
+```
+1. tf.Data.Dataset.from_generator() 让tensorflow知道它是由python生成器提供的
+2. map 操作：在这里，我们设置了从生成器输入(文件名)到我们实际需要的模型(加载和调整大小的图像)所需的所有任务。主要用 _read_image_and_resize()
+3. batch 操作：是一个方便的函数，它将图像批处理成具有一致数量元素的包。
+4. prefetch 操作：让Tensorflow做与设置队列相关的记录工作，以便数据管道继续读取和入列数据，直到它有N个批量的数据都已加载并准备就绪
+
+train.py
+```python
+from recognizer.pair_generator import PairGenerator
+from recognizer.tf_dataset import Dataset
+from recognizer.model import Model
+import tensorflow as tf
+import pylab as plt
+import numpy as np
+
+
+def main():
+    generator = PairGenerator()
+    # print 2 outputs from our generator just to see that it works:
+    iter = generator.get_next_pair()
+    for i in range(2):
+        print(next(iter))
+    ds = Dataset(generator)
+    model_input = ds.next_element
+    model = Model(model_input)
+
+    # train for 100 steps
+    with tf.Session() as sess:
+        # sanity test: plot out the first resized images and their label:
+        (img1, img2, label) = sess.run([model_input.img1, 
+                                        model_input.img2, 
+                                        model_input.label])
+
+        # img1 and img2 and label are BATCHES of images and labels. plot out the first one
+        plt.subplot(2, 1, 1)
+        plt.imshow(img1[0].astype(np.uint8))
+        plt.subplot(2, 1, 2)
+        plt.imshow(img2[0].astype(np.uint8))
+        plt.title(f'label {label[0]}')
+        plt.show()
+
+        # intialize the model
+        sess.run(tf.global_variables_initializer())
+        # run 100 optimization steps
+        for step in range(100):
+            (_, current_loss) = sess.run([model.opt_step, 
+                                          model.loss])
+            print(f"step {step} log loss {current_loss}")
+
+
+if __name__ == '__main__':
+    main()
+```
+[代码在 github 上](https://github.com/urimerhav/tflow-dataset)
+
+## 示例：删除图片背景
+1. 搜索只有单一物品的图片
+2. 搜索一些通用的背景模板，地毯或者墙壁
+3. 建立一个生成器，生成成对的背景文件路径+对象文件路径，将它们融合在一起。
+4. 让模型猜测哪些像素属于背景，哪些像素属于物品
+
+生成器
+```python
+  def gen_item(self):
+      while True:
+            bkg_image = random.sample(self.all_bkg_images, 1)[0]
+            png_name = self.get_complete_png(cleaned_image=False)
+
+          yield {'png_path': str(png_name),
+                 'bkg_image': bkg_image,
+```
+
+组合背景图片和物品图片
+```python
+def tf_blend_images(bkg_img, obj_img, object_pixels):
+    object_shape = tf.shape(obj_img)
+    cropped_bkg = tf.random_crop(bkg_img, object_shape)
+
+    composed_image = (cropped_bkg * tf.cast(tf.logical_not(object_pixels), tf.uint8) +
+                      obj_img * tf.cast(object_pixels, tf.uint8))
+
+    # random saturation etc
+
+    return composed_image
+```
+
+[模型](http://proproductpix.org/)
 
 ---
 
-# Tip
- 
+# Tip Spring MVC 中使用 Thymeleaf
+1. 建立 Spring MVC 工程
+2. 引入 Thymeleaf 依赖
+```xml
+        <dependency>
+            <groupId>org.thymeleaf</groupId>
+            <artifactId>thymeleaf</artifactId>
+            <version>2.1.4.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.thymeleaf</groupId>
+            <artifactId>thymeleaf-spring4</artifactId>
+            <version>2.1.4.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sourceforge.nekohtml</groupId>
+            <artifactId>nekohtml</artifactId>
+            <version>1.9.22</version>
+        </dependency>
+```
+3. 配置 applicationContent.xml
+```xml
+...
+<!-- Thymeleaf视图模板引擎配置 -->
+    <bean id="templateResolver" class="org.thymeleaf.templateresolver.ServletContextTemplateResolver">
+        <property name="prefix" value="/resources/static/" />
+        <property name="suffix" value=".html" />
+        <property name="cacheable" value="false" />
+        <property name="characterEncoding" value="UTF-8" />
+        <property name="templateMode" value="LEGACYHTML5" />
+    </bean>
+
+    <bean id="templateEngine" class="org.thymeleaf.spring4.SpringTemplateEngine">
+        <property name="templateResolver" ref="templateResolver" />
+    </bean>
+
+    <!-- 视图解析器配置 -->
+    <bean class="org.thymeleaf.spring4.view.ThymeleafViewResolver">
+        <property name="templateEngine" ref="templateEngine" />
+        <property name="order" value="1" />
+        <!-- <property name="viewNames" value="*.html,*.xhtml" /> -->
+        <property name="characterEncoding" value="UTF-8"/>
+    </bean>
+...
+```
+4. controller 层
+```java
+@Controller
+public class MyController {
+    @RequestMapping(value = "/index")
+    public String index(Model model) {
+        model.addAttribute("p1","v1");
+        model.addAttribute("p2","v2");
+        model.addAttribute("p3", "v3");
+        return "index";
+    }
+}
+```
+
+5. view 层
+```html
+<head>
+<body>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var p1 = [[${p1}]];
+    var p2 = [[${p2}]];
+    var p3 = [[${p3}]];
+    /*]]>*/
+</script>
+</body>
+</head>
+```
 
 ---
     
