@@ -2,14 +2,64 @@
 
 ---
 
-# Algorithm []()
+# Algorithm [64. Minimum Path Sum](https://leetcode.com/problems/minimum-path-sum/)
 ## 1. 问题描述
+最小路径和
 
+给定一个 m*n 的矩阵，由非负整数填充，找到从左上角都右下角的一条路径，要求这条路径所有数的和相比于其他路径是最小的。
+
+每次只能向右或向下移动一格
+#### 示例
+* 输入：
+```textmate
+    [
+        [1,3,1],
+        [1,5,1],
+        [4,2,1]
+    ]
+```
+* 输出： 7
+* 解释：最小路径 1->3->1->1->1 和为 7
 ## 2. 解题思路
+设 s[i,j] 表示从 grid[0,0] 到 [i,j] 的最小和
+
+s[0,0] = grid[0,0]
+
+s[i,0] = s[i-1,0] + grid[i,0]  , i > 0
+
+s[0,j] = s[0,j-1] + grid[0,j] , j > 0
+
+s[i,j] = min(s[i-1,j], s[i,j-1]) + grid[i,j] , i,j > 0
+
+最终求出 s[m-1][n-1]
+
+这里的 s 可以复用 grid
 
 ## 3. 代码
-
+```go
+func minPathSum(grid [][]int) int {
+   m,n := len(grid),len(grid[0])
+       for i := 1; i < m; i++ {
+           grid[i][0] = grid[i-1][0] + grid[i][0]
+       }
+       for j := 1; j < n; j++ {
+           grid[0][j] = grid[0][j-1] + grid[0][j]
+       }
+       for i := 1; i < m; i++ {
+           for j := 1; j < n; j++ {
+               min := grid[i-1][j]
+               if grid[i][j-1] < grid[i-1][j] {
+                   min = grid[i][j-1]
+               }
+               grid[i][j] = min + grid[i][j]
+           }
+       }
+       return grid[m-1][n-1]
+}
+```
 ## 4. 复杂度分析
+* 时间复杂度 : O(m*n)
+* 空间复杂度 : O(1)
 
 ---
 
