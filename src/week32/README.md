@@ -64,11 +64,61 @@ func minPathSum(grid [][]int) int {
 ---
 
 # Review [Artificial Intelligence vs. Machine Learning vs. Deep Learning](https://towardsdatascience.com/artificial-intelligence-vs-machine-learning-vs-deep-learning-2210ba8cc4ac)
+人工智能、机器学习和深度学习的区别
+![evolution_ai](evolution_ai.png)
+人工智能的进化
 
+人工智能只是一个机器模拟人类认知功能（例如“学习”和“解决问题”）的应用程序的广义术语。
+
+机器学习和深度学习都是人工智能的子领域。
+
+## 机器学习 和 深度学习
+![AIvsMLvsDL](AIvsMLvsDL.png)
+机器学习算法必须经过数据训练。
+
+机器学习是很古老的领域了，它融合了已经存在了数十年的方法和算法，其中一些早在20世纪60年代就已经存在了。
+
+## 深度学习 —— 未来的方向
+另一方面，深度学习是人工智能的一个非常年轻的领域，它由人工神经网络提供支持。
+深度学习可以认为是机器学习的一个子领域。
+![neural_network](neural_network.png)
+
+人工神经网络具有独特的能力，使深度学习模型能够解决机器学习模型无法解决的任务。
+
+没有深度学习，将不会出现自动驾驶、聊天机器人、个人助手Alexa 和 Siri、Google 翻译等。
+## 为什么深度学习比机器学习更好
+1. 不需要特征提取
+2. 由海量数据提供支持
+![MLvsSDLvsLDL](MLvsSDLvsLDL.png)
+数据量越大，深度学习模型的优势越明显。
+
+[免费深度学习课程](https://www.deeplearning-academy.com/)
 
 ---
 
-# Tip
+# Tip SVN 迁移到 GIT 并保留 commit 记录
+1. 获取 svn 用户列表
+```shell script
+svn log ^/ --xml | grep -P "^<author" | sort -u | perl -pe 's/<author>(.*?)<\/author>/$1 = /' > users.txt
+```
+2. 从 svn 拉取所有数据
+```shell script
+git svn clone --stdlayout --no-metadata -A users.txt svn://hostname/path dest_dir-tmp
+```
+
+3. 如果项目比较大，需要多 fetch 几次
+```shell script
+cd dest_dir-tmp
+git svn fetch
+```
+4. 添加远程仓库
+```shell script
+git remote add origin xxxxx
+```
+5. 提交代码
+```shell script
+git push origin master
+```
  
 
 ---
