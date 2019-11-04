@@ -2,8 +2,34 @@
 
 ---
 
-# Algorithm []()
+# Algorithm [72. Edit Distance](https://leetcode.com/problems/edit-distance/)
 ## 1. 问题描述
+编辑距离
+
+给定两个单词 word1 和 word2，找到一个最小操作步骤将 word1 转成 word2
+
+在一个单词上有 3 个允许的操作：
+1. 插入一个字符
+2. 删除一个字符
+3. 替换一个字符
+
+示例 1:
+* 输入：word1="horse",word2="ros"
+* 输出：3
+* 解释：
+    * horse -> rorse
+    * rorse -> rose
+    * rose -> ros
+
+示例 2：
+* 输入: word1="intention",word2="execution"
+* 输出: 5
+* 解释：
+    * intention -> inention
+    * inention -> enention
+    * enention -> exention
+    * exention -> exection
+    * exection -> execution
 
 ## 2. 解题思路
 
