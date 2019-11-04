@@ -32,10 +32,58 @@
     * exection -> execution
 
 ## 2. 解题思路
+设 dp[i][j] 表示 w1[0,i) 和 w2[0,j) 的最短编辑次数
+
+if w1[i] == w2[j] then dp[i][j] = dp[i-1][j-1]
+
+if w1[i] != w2[j] then
+* (1) 用 w2[j] 替换 w1[i] then dp[i][j] = dp[i-1][j-1] + 1
+* (2) 删除 w1[i] then dp[i][j] = dp[i-1][j] + 1
+* (3) 在 w1[i] 之后插入 w2[j] then dp[i][j] = dp[i][j-1] + 1
+
+* 综上， dp[i][j] = min(dp[i-1][j-1],dp[i-1][j],dp[i][j-1]) + 1
+
+初始化 dp[k][0] = dp[0][k] = k
+
+最终求出 dp[m][n],其中 m=len(w1),n=len(w2)
 
 ## 3. 代码
-
+```go
+func minDistance(word1 string, word2 string) int {
+	m,n := len(word1),len(word2)
+	var dp [][]int
+	dp = make([][]int, m+1)
+	for i := 0; i < m+1; i++ {
+		dp[i] = make([]int, n+1)
+	}
+	for i := 0; i < m+1; i++ {
+		dp[i][0] = i
+	}
+	for j := 0; j < n+1; j++ {
+		dp[0][j] = j
+	}
+	for i := 0; i < m; i++ {
+		for j := 0; j < n; j++ {
+			if word1[i] == word2[j] {
+				dp[i+1][j+1] = dp[i][j]
+			} else {
+				min := dp[i][j]
+				if min > dp[i+1][j] {
+					min = dp[i+1][j]
+				}
+				if min > dp[i][j+1] {
+					min = dp[i][j+1]
+				}
+				dp[i+1][j+1] = min + 1
+			}
+		}
+	}
+	return dp[m][n]
+}
+```
 ## 4. 复杂度分析
+* 时间复杂度： O(m*n)
+* 空间复杂度： O(m*n)
 
 ---
 
