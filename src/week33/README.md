@@ -202,7 +202,7 @@ Spark 使用 RDDs 实现 MaxTemperatureMapper
 
 ---
 
-# Tip 计算机存储单位：Byte、KB、MB、GB、TB、PB、EB、ZB、YB、DB、NB
+# Tip 计算机存储单位：Byte、KB、MB、GB、TB、PB、EB、ZB、YB、BB
 * 1Byte = 8 Bit 
 * 1 KB(Kilobyte) = 2<sup>10</sup> Bytes = 1,024 Bytes 
 * 1 MB(Megabyte) = 2<sup>20</sup> Bytes = 1,024 KB = 1,048,576 Bytes 
@@ -212,7 +212,7 @@ Spark 使用 RDDs 实现 MaxTemperatureMapper
 * 1 EB(Exabyte) = 2<sup>60</sup> Bytes = 1,024 PB = 1,048,576 TB = 1,152,921,504,606,846,976 Bytes 
 * 1 ZB(Zettabyte) = 2<sup>70</sup> Bytes = 1,024 EB = 1,180,591,620,717,411,303,424 Bytes 
 * 1 YB(Yottabyte) = 2<sup>80</sup> Bytes = 1,024 ZB = 1,208,925,819,614,629,174,706,176 Bytes
-* 1 BB(Brontobyte) = 2<sup>90</sup> Bytes = 1,024 YB = 1237940039285380274899124224 Bytes
+* 1 BB(Brontobyte) = 2<sup>90</sup> Bytes = 1,024 YB = 1,237,940,039,285,380,274,899,124,224 Bytes
 
 ---
     
