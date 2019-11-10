@@ -87,12 +87,132 @@ func minDistance(word1 string, word2 string) int {
 
 ---
 
-# Review []()
+# Review [Why We Need Apache Spark](https://medium.com/better-programming/why-we-need-apache-spark-51c8a57aa57a)
+为什么我们需要 Spark
+
+根据 IDC 估计，在 2013 年，互联网总的数据量为 4.4ZB（1万亿GB）,并且以每年 40% 的
+速度增长，预计到 2020 年将达到 44ZB
+
+因此我们需要存储越来越多的数据，并采取措施防止由于硬件故障而造成的数据丢失。
+
+因此我们需要 Hadoop 和 Spark
+
+## 示例
+我们有 500GB 的天气数据
+
+国家 | 城市 | 数据 | 气温
+
+假设我们需要按照国家/地区计算最高气温
+
+```java
+import java.io.*;
+import java.util.HashMap;import java.util.HashSet;import java.util.Map;
+
+public class MaxTemperature {
+    public static void main(String[] args) throws FileNotFoundException,IOException {
+        Map<String,Integer> maxTemps = new HashMap<>();
+        String inputPath = "weather.csv";
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(inputPath)));
+        String line;
+        while((line = reader.readLine()) != null) {
+            String[] split = line.split("|");
+            String country = split[0];
+            Integer temp = Integer.valueOf(split[3]);
+            if (temp != null) {
+                updateTemp(country, temp, maxTemps);
+            }
+        }
+        for (Map.Entry entry : maxTemps.entrySet()) {
+            System.out.println(entry.getKey() + "|" + entry.getValue());
+        }
+    }
+    
+    private static void updateTemp(String country, int temp, Map<String,Integer> maxTemps) {
+        Integer previousTemp = maxTemps.get(country);
+        if (previousTemp == null) maxTemps.put(country, temp);
+        if (previousTemp != null && temp > previousTemp) maxTemps.put(country, temp);
+    }
+}
+```
+对于 500GB 的数据量，这个程序需要运行大概 5 个小时
+
+用 MapReduce 处理大概只需要 15 分钟
+
+* MaxTemperatureMapper
+```java
+public class MaxTemperatureMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
+    @Override
+    public void map(LongWritable key, Text value, Context context) {
+        String line = value.toString();
+        String[] split = line.split("|");
+        String country = split[0];
+        Integer temp = Integer.valueOf(split[3]);
+        context.write(new Text(country), new IntWritable(temp));
+    }
+}
+```
+* MaxTemperatureReducer
+```java
+public class MaxTemperatureReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
+    @Override
+    public void reduce(Text key, Iterable<IntWritable> values, Context context) {
+        int maxTemperature = Integer.MIN_VALUE;
+        for (IntWritable temp : values) {
+            maxTemperature = Math.max(maxTemperature, temp);
+        }
+        context.write(key, new IntWritable(maxTemperature));
+    }
+}
+```
+
+MapReduce 之所以性能好，是因为它是并行执行的
+
+## 问题
+MapReduce 所需的数据,大多存储在 HDFS 中。
+
+大部分 MapReduce 程序大约花费其 90% 的时间从硬盘中读取数据。
+
+认识到这个问题之后，研究人员开发了新的框架，能够进行 ： 跨连接的机器集群进行内存计算
+
+## 解决方案 —— Spark
+```java
+JavaRDD<String> weatherData = sc.textFile(inputPath);
+JavaPairRDD<String,Integer> tempsByCountry = weatherData.mapToPair(new Function<String,String,Integer>() {
+   public Tuple2<String,Integer> call(String line) {
+       String[] split = line.split("|");
+       String key = split[0];
+       Integer temp = Integer.valueOf(split[3]);
+       if (temp != null) temp = 0;
+       return new Tuple2(key, temp);
+   } 
+});
+JavaPairRDD<String,Integer> maxTempByCountry = tempByCountry.reduce(new Function2<Integer,Integer,Integer>() {
+    public Integer call(Integer temp1, Integer temp2) {
+        return Math.max(temp1, temp2);
+    }
+});
+maxTempByCountry.saveAsHadoopFile(destPath, String.class, Integer.class, TextOutputFormat.class);
+```
+Spark 使用 RDDs 实现 MaxTemperatureMapper
+
+由于 Spark 完全在内存中运行，因此对于可比较的任务，Spark 的迭代速度比 MapReduce 快 10 倍。
+
+
+
 
 ---
 
-# Tip
- 
+# Tip 计算机存储单位：Byte、KB、MB、GB、TB、PB、EB、ZB、YB、DB、NB
+* 1Byte = 8 Bit 
+* 1 KB(Kilobyte) = 2<sup>10</sup> Bytes = 1,024 Bytes 
+* 1 MB(Megabyte) = 2<sup>20</sup> Bytes = 1,024 KB = 1,048,576 Bytes 
+* 1 GB(Gigabyte) = 2<sup>30</sup> Bytes = 1,024 MB = 1,048,576 KB = 1,073,741,824 Bytes 
+* 1 TB(Trillionbyte) = 2<sup>40</sup> Bytes = 1,024 GB = 1,048,576 MB = 1,073,741,824 KB = 1,099,511,627,776 Bytes 
+* 1 PB(Petabyte) = 2<sup>50</sup> Bytes = 1,024 TB = 1,048,576 GB =1,125,899,906,842,624 Bytes （13107.2个80G的
+* 1 EB(Exabyte) = 2<sup>60</sup> Bytes = 1,024 PB = 1,048,576 TB = 1,152,921,504,606,846,976 Bytes 
+* 1 ZB(Zettabyte) = 2<sup>70</sup> Bytes = 1,024 EB = 1,180,591,620,717,411,303,424 Bytes 
+* 1 YB(Yottabyte) = 2<sup>80</sup> Bytes = 1,024 ZB = 1,208,925,819,614,629,174,706,176 Bytes
+* 1 BB(Brontobyte) = 2<sup>90</sup> Bytes = 1,024 YB = 1237940039285380274899124224 Bytes
 
 ---
     
