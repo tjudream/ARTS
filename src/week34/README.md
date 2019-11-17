@@ -2,14 +2,72 @@
 
 ---
 
-# Algorithm []()
+# Algorithm [617. Merge Two Binary Trees](https://leetcode.com/problems/merge-two-binary-trees/)
 ## 1. 问题描述
+合并两个二叉树
+
+合并规则是，将两个对应位置的节点相加，如果其中一个节点是 null，则新树为非 null 节点。
+
+#### 示例:
+* 输入:
+```text
+    Tree 1         Tree 2
+       1             2
+      / \           / \
+     3   2         1   3
+    /               \   \
+   5                 4   7
+```
+* 输出 :
+```text
+Merged Tree
+            3
+           / \
+          4   5
+         / \   \
+        5   4   7 
+```
 
 ## 2. 解题思路
+递归实现，前序遍历
 
 ## 3. 代码
+```golang
+type TreeNode struct {
+    Val int
+    Left *TreeNode
+    Right *TreeNode
+}
 
+func merge(root *TreeNode, t1 *TreeNode, t2 *TreeNode) *TreeNode {
+    if (root == nil) {
+        root = new(TreeNode)
+    }
+    if (t1 != nil && t2 != nil) {
+        root.Val = t1.Val + t2.Val
+        root.Left = merge(root.Left, t1.Left, t2.Left)
+        root.Right = merge(root.Right, t1.Right, t2.Right)
+    } else if (t1 == nil && t2 != nil) {
+        root.Val = t2.Val
+        root.Left = merge(root.Left, nil, t2.Left)
+        root.Right = merge(root.Right, nil, t2.Right)
+    } else if (t1 != nil && t2 == nil) {
+        root.Val = t1.Val
+        root.Left = merge(root.Left, t1.Left, nil)
+        root.Right = merge(root.Right, t1.Right, nil)
+    } else {
+        return nil
+    }
+    return root
+}
+
+func mergeTrees(t1 *TreeNode, t2 *TreeNode) *TreeNode {
+    return merge(nil, t1, t2)
+}
+```
 ## 4. 复杂度分析
+* 时间复杂度 : O(max(N,M)) N,M 分别为两棵树的节点数 
+* 空间复杂度 : O(max(N,M))
 
 ---
 
