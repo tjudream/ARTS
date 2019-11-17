@@ -71,11 +71,50 @@ func mergeTrees(t1 *TreeNode, t2 *TreeNode) *TreeNode {
 
 ---
 
-# Review []()
+# Review [How Internet of things (IoT) is transforming the future business landscape](https://medium.com/faun/how-internet-of-things-iot-is-transforming-the-future-business-landscape-21f0e8b702c7)
+物联网如何改变未来的商业布局
+
+## 获取更多信息
+信息是任何企业在市场上生存和存在的关键。
+
+有了准确的信息，企业可以提出聪明的项目建议书并修改任务以吸引更多的客户。
+## 物联网授权的库存管理流程
+物联网的创新同样会在跟踪和监督库存方面带来动荡。
+## 代表远程办公
+物联网的创新为需要远程工作的个人提供了巨大的潜在成果。
+## 数字产品转型和KPI：为什么您的标准策略不起作用？
+## 快速简单的开放
+## 熟练度和获利能力
+组织几乎肯定会在很少有员工参与的情况下完成其活动。
+## 需要新购买者
+在将您的业务扩展到IoT时，请记住利用您的IoT小工具的客户将有新的需求.
+## 需要新的人员配备
+你绝对需要能够处理IoT活动并将这些IoT小工具协调到你的连续方法中的人员。
+## 无休止的客户承诺
+当物品变得热切时，客户就可以利用系统关联和Internet与这些物品进行通信和远程控制
+## 总结
+物联网创新一直在不断发展，并且有大量的新闻报道，在绝大多数行业里，我们将看到物联网小工具逐渐成为主流。
 
 ---
 
-# Tip
+# Tip svn 迁移到 git 过程中忽略指定路径
+```text
+--ignore-paths=<regex>
+
+当传递给init或clone正则表达式将被保存为配置密钥。请参阅fetch有关说明--ignore-paths。
+
+每次抓取跳过“doc *”目录
+--ignore-paths="^doc"
+
+跳过第一级目录的“分支”和“标签”
+--ignore-paths="^[^/]+/(?:branches|tags)"
+```
+
+```text
+git svn clone 时使用：
+git svn clone https://xxx.com/svn/branch/xxx --ignore-paths="server/images/*"
+```
+
  
 
 ---
