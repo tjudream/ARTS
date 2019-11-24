@@ -1,23 +1,146 @@
-# week
+# week35
 
 ---
 
-# Algorithm []()
+# Algorithm [87. Scramble String](https://leetcode.com/problems/scramble-string/)
 ## 1. 问题描述
+混淆字符串
+
+给定一个字符串 s1， 我们可以将其拆分为两个非空字符串并用二叉树表示，并且可以递归地拆分其子节点的字符串
+
+下面是 s1="great" 的一种表示：
+```text
+    great
+   /    \
+  gr    eat
+ / \    /  \
+g   r  e   at
+           / \
+          a   t
+```
+在这棵树中我们可以选择任意一个非叶子节点，然后对换其两棵子树
+
+比如我们选择 gr，然后对换 g 和 r，得到 rgeat
+```text
+    rgeat
+   /    \
+  rg    eat
+ / \    /  \
+r   g  e   at
+           / \
+          a   t
+```
+我们将 rgeat 称作 great 的混淆字符串
+
+同样地，我们可以继续对换 eat 和 at 的子树，得到混淆字符串 rgtae
+```text
+    rgtae
+   /    \
+  rg    tae
+ / \    /  \
+r   g  ta  e
+       / \
+      t   a
+```
+rgtae 也是 great 的混淆字符串
+
+给两个字符串 s1 和 s2,这两个字符串长度相同，判断 s2 是否是 s1 的混淆字符串
+
+#### 示例 1 ：
+* 输入 ： s1 = "great", s2 = "rgeat"
+* 输出 ： true
+#### 示例 2 ： 
+* 输入 ： s1 = "abcde", s2 = "caebd"
+* 输出 ： false
+
 
 ## 2. 解题思路
 
+1. 首先判断两个字符串是否含有相同的字母及其数量，如果不是，则直接返回false
+2. 如果 s1 和 s2 所含字母及其数量均相同
+    * 2.1 判断 s2[0,i] 是否是 s1[0,i] 的混淆字符串 
+    && s2[i,n] 是否是 s1[i,n] 的混淆字符串
+    
+    两个条件同时成立时 s2 是 s1 的混淆字符串
+    
+    * 或者 2.2 判断 s2[n-i,n] 是否是 s1[0,i] 的混淆字符串
+    && s2[0,n-i] 是 s1[i,n] 的混淆字符串
+    
+    两个条件同时成立时 s2 是 s1 的混淆字符串
+
 ## 3. 代码
+```gotemplate
+func isScramble(s1 string, s2 string) bool {
+    if s1 == s2 {
+        return true
+    }
+    l := len(s1)
+    var dic [26]int
+    for i := 0; i < l; i++ {
+      dic[s1[i]-'a']++
+      dic[s2[i]-'a']--
+    }
 
+    for i := 0; i < 26; i++ {
+      if dic[i] != 0 {
+        return false
+      }
+    }
+
+    for i := 1; i < l; i++ {
+      if isScramble(s1[0:i],s2[0:i]) && isScramble(s1[i:l],s2[i:l]) {
+        return true
+      }
+      if isScramble(s1[0:i],s2[l-i:l]) && isScramble(s1[i:l],s2[0:l-i]) {
+        return true
+      }
+    }
+    return false
+}
+
+```
 ## 4. 复杂度分析
+* 时间复杂度 : 
+    * 最好情况 : O(N)
+    * 最坏情况 : O(N<sup>2</sup>)
+* 空间复杂度 : O(log<sub>2</sub>N) 递归栈的深度
 
 ---
 
-# Review []()
+# Review [Java Spring Framework — Pros, Cons, Common Mistakes](https://medium.com/swlh/java-spring-framework-pros-cons-common-mistakes-d519b7caeeae)
+## 什么是 Java Spring Framework
+Spring 是一个 Java 框架，可以让开发企业级应用变得更简单。其受欢迎的主要原因是它适用于
+各种场景
+
+## Spring 的优点
+* POJO(Plain Old Java Object) —— 普通的老的 Java 对象，轻量级框架
+* 灵活的配置 —— 基于 XML 的，或者 properties 文件，或者 Java 注解
+* AOP 模块
+* 测试简单
+## Spring 框架的缺点
+* 复杂 —— 有大量的变量和复杂度
+* 并行机制
+* 没有具体准则
+## 常见陷阱
+设计 web 应用时尽量避免以下错误
+* 错误处理不是优先事项
+* 报告是从包含应用程序数据的表中创建的
+* 试图重塑事物
+* 在只读事务中查询实体
+## 你的成功将取决于经验
+尽管Spring提供了很多好处，但是你将需要经验丰富的开发人员，他们将知道如何利用它们。
 
 ---
 
-# Tip
+# Tip Node.js 增加可使用的内存
+Node.js 默认只能使用 2G 的内存，如果数据量太大就有可能导致 OOM，进而导致进程退出
+
+node 提供了参数 max-new-space-size 来控制可以使用内存的大小，单位是 MB
+
+以下表示 node 最多可以使用 8G 的内存
+```nodejs
+node --max-new-space-size=8192 app.js
+```
  
 
 ---
