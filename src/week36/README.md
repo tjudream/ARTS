@@ -2,10 +2,29 @@
 
 ---
 
-# Algorithm []()
+# Algorithm [96. Unique Binary Search Trees](https://leetcode.com/problems/unique-binary-search-trees/)
 ## 1. 问题描述
+唯一的二叉搜索树
+
+二叉搜索树：左子树的所有节点的值都小于根节点的值，右子树的所有节点的值都小于根节点的值
+
+给定一个 n，有多少种唯一的 BST's 可以存储 1...n?
+
+#### 示例：
+* 输入：3
+* 输出：5
+* 解释： 给定 n=3,总共有 5 种 BST's:
+```roomsql
+   1         3     3      2      1
+    \       /     /      / \      \
+     3     2     1      1   3      2
+    /     /       \                 \
+   2     1         2                 3
+```
 
 ## 2. 解题思路
+dp[i] 表示已 i 为根的唯一的 BST's 的数量
+
 
 ## 3. 代码
 
