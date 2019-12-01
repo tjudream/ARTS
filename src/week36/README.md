@@ -51,12 +51,53 @@ func numTrees(n int) int {
 * 空间复杂度：O(N)
 ---
 
-# Review []()
+# Review [How to read research papers](https://medium.com/lis-computer-vision-blogs/how-to-read-research-papers-6aac51632679)
+如何阅读学术论文
+
+## 1. 浏览
+花 1~2 分钟找到兴趣点和相关性。阅读摘要、标题、图表等。查看作者、引用等。
+## 2. 通过粗读来获取论文的核心观点
+这个阶段的结果是使用2-3个句子来陈述问题，论文的新颖性以及结果的重要性。
+
+花费 5~10 分钟在此阶段
+
+并且尽量回答一下 6 个问题 (6Cs)
+* Category (What type of paper?) 论文属于哪种类型
+* Context (What other papers is it related to? How related to your work?)
+它引用了哪些论文？与你的工作有多大的相关性？
+* Contributions(Main contributions?) 主要贡献是什么？
+* Credible (Dose it appear to have any credibility?) 它看起来可信吗？
+* Care (i.e. the Who care's test) Given its valid, will anyone care? 
+will it change anything? 是否有人在乎它，它改变了什么？
+* Cost (How much time and effort will it cost you to read it carefully)
+仔细阅读它会花费多少时间和精力？
+
+## 3. 批判性阅读
+仔细阅读，并相信一切，同时忽略细节。
+
+此阶段将花费 20~60 分钟
+
+检查作者的凭据和声誉。
+
+记录下你的疑问
+
+寻找可能是错误的假设
+
+确保证据充分且准确
+
+## 4. 创造性地阅读
+本文的新颖性。它会向新的方向发展吗？
+
+## 5. 深度阅读
+仔细阅读
 
 ---
 
-# Tip
- 
+# Tip Google 大数据三驾马车 (三篇基础论文)
+* [Google-File-System](TheGoogleFileSystem.pdf) 的开源实现：HDFS
+* [Google-MapReduce](MapReduce_Simplified Data Processing on Large Clusters.pdf) 的开源实现：Hadoop MapReduce
+* [Google-Bigtable](Bigtable_A Distributed Storage System for Structured Data.pdf) 的开源实现：HBase
+
 
 ---
     
