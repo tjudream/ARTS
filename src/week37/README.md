@@ -2,11 +2,37 @@
 
 ---
 
-# Algorithm []()
+# Algorithm [95. Unique Binary Search Trees II](https://leetcode.com/problems/unique-binary-search-trees-ii/)
 ## 1. 问题描述
+唯一搜索二叉树2
 
+给定一个整数 n，生成所有结构的 BST's
+
+#### 示例
+* 输入: 3
+* 输出:
+```text
+[
+  [1,null,3,2],
+  [3,2,null,1],
+  [3,1,null,null,2],
+  [2,1,3],
+  [1,null,2,null,3]
+]
+```
+* 解释:
+```text
+   1         3     3      2      1
+    \       /     /      / \      \
+     3     2     1      1   3      2
+    /     /       \                 \
+   2     1         2                 3
+```
 ## 2. 解题思路
+递归实现
 
+每一层递归，循环从 s~e (s>=1,e<=n) 每个节点 i 作为根，计算左子树列表 letflist (s,i-1) 和 rightlist (i+1,n),然后组合
+leftlist 和 rightlist 的每种组合的可能
 ## 3. 代码
 
 ## 4. 复杂度分析
