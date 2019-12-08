@@ -34,16 +34,201 @@
 每一层递归，循环从 s~e (s>=1,e<=n) 每个节点 i 作为根，计算左子树列表 letflist (s,i-1) 和 rightlist (i+1,n),然后组合
 leftlist 和 rightlist 的每种组合的可能
 ## 3. 代码
+```gotemplate
+func generate(s int, e int) []*TreeNode {
+	var res []*TreeNode
+	if s > e {
+		res = append(res, nil)
+		return res
+	}
+	if s == e {
+		root := &TreeNode{s, nil, nil}
+		res = append(res, root)
+		return res
+	}
+	for i := s; i <= e; i++ {
+		leftTrees := generate(s, i - 1)
+		rightTrees := generate(i + 1, e)
+		for l := 0; l < len(leftTrees); l++ {
+			for r := 0; r < len(rightTrees); r++ {
+				node := &TreeNode{i, leftTrees[l], rightTrees[r]}
+				res = append(res, node)
+			}
+		}
+	}
+	return res
+}
 
+func generateTrees(n int) []*TreeNode {
+    if n < 1 {
+        return []*TreeNode{}
+    }
+    return generate(1, n)
+}
+```
 ## 4. 复杂度分析
+* 时间复杂度 : O(n<sup>3</sup>)
+* 空间复杂度 : O(n<sup>3</sup>)
 
 ---
 
-# Review []()
+# Review [Write Less Code with Generics](https://medium.com/swlh/write-less-code-with-generics-4e92cd7d9af9)
+用泛型编写更少的代码
+
+特点：
+* 类型安全
+* 不需要类型转换
+* 编译时检查
+
+## 类型参数命名约定
+* T type 类型
+* E element 元素
+* K key 键
+* N Number 数字
+* V value 值
+## 通配符
+? 代表任意类型
+## 泛型示例
+```java
+public class Response<T> {
+ private List<T> data;
+ private Integer page;
+ private Integer elements;
+}
+```
+## 如何写更少的代码
+### 一个简单的项目
+BaseEntity.java
+```java
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class BaseEntity {
+    @Id
+    protected String id;
+    protected String tenantId;
+    protected Date creationDate;
+    protected Date updateDate;
+}
+```
+
+BaseRepository
+```java
+@Repository
+public interface GenericRepository<E extends BaseEntity> extends ReactiveCrudRepository<E, String> {
+    Mono<Void> deleteByIdAndTenantId(String id, String tenantId);
+    Mono<E> findFirstByIdAndTenantId(String id, String tenantId);
+}
+```
+BaseService
+```java
+@Service
+@Slf4j
+public class BaseService<E extends BaseEntity> {
+
+    @Autowired
+    protected GenericRepository<E> generalRepo;
+
+    public Mono<E> findEnitity(String entityId, String tenantId) {
+        return generalRepo.findFirstByIdAndTenantId(entityId,tenantId);
+    }
+
+    public Mono<Void> delete(String entityId, String tenantId) {
+        return findEnitity(entityId, tenantId)
+                .switchIfEmpty(Mono.error(new NotFoundException(ITEM_NOT_FOUND)))
+                .flatMap(e -> generalRepo.deleteByIdAndTenantId(e.getId(),e.getTenantId()));
+    }
+    
+    public Mono<E> saveEntity(String tenantId, E entity) {
+        entity.setTenantId(tenantId);
+        return generalRepo.save(entity);
+    }
+
+    public Mono<E> updateEntity(String entityId, String tenantId,E entity) {
+        return findEnitity(entityId,tenantId)
+                .map(u -> saveEntity(tenantId,entity))
+                .switchIfEmpty(Mono.error(new Exception(ITEM_NOT_FOUND)))
+                .flatMap(m -> m);
+    }
+}
+```
+所有的 serveice 都可以继承自这个 BaseService
+
+BaseController
+```java
+public class BaseController<E extends BaseEntity> {
+
+    @Autowired
+    private BaseService<E> baseService;
+
+    @PostMapping("/save")
+    public Mono<E> save(Authentication auth,
+                        @RequestBody E entity) {
+        return baseService.save(getTenant(auth),entity);
+    }
+    
+}
+```
 
 ---
 
-# Tip
+# Tip 在 Mac 下配置 Golang 的开发环境
+安装 vim 的包管理器
+```text
+git clone http://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
+```
+编辑 .vimrc
+```text
+vim ~/.vimrc 
+```
+
+添加如下配置:
+```text
+set nocompatible              " be iMproved, required
+filetype off                  " required
+set backspace=2
+set modelines=0
+syntax on
+set ts=4
+set expandtab
+%retab!
+" set number
+
+autocmd BufWritePre *.go :Fmt
+set rtp+=~/.vim/bundle/vundle/
+call vundle#rc()
+
+" let Vundle manage Vundle
+" required! 
+Bundle 'gmarik/vundle'
+
+" 可以通过以下四种方式指定插件的来源
+" a) 指定Github中vim-scripts仓库中的插件，直接指定插件名称即可，插件明中的空格使
+用“-”代替。
+Bundle 'L9'
+
+" b) 指定Github中其他用户仓库的插件，使用“用户名/插件名称”的方式指定
+Bundle 'tpope/vim-fugitive'
+Bundle 'Lokaltog/vim-easymotion'
+Bundle 'rstacruz/sparkup', {'rtp': 'vim/'}
+Bundle 'tpope/vim-rails.git'
+Bundle 'dgryski/vim-godef'
+Bundle 'Blackrush/vim-gocode'
+Bundle 'majutsushi/tagbar'
+
+" c) 指定非Github的Git仓库的插件，需要使用git地址
+Bundle 'git://git.wincent.com/command-t.git'
+
+" d) 指定本地Git仓库中的插件
+" Bundle 'file:///Users/gmarik/path/to/plugin'
+
+filetype plugin indent on     " required!
+```
+
+然后输入 
+```text
+:BundleInstall  
+```
  
 
 ---
