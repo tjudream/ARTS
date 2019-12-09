@@ -37,6 +37,7 @@
 * [week35](src/week35/README.md)
 * [week36](src/week36/README.md)
 * [week37](src/week37/README.md)
+* [week38](src/week38/README.md)
 
 ***
 # ARTS
