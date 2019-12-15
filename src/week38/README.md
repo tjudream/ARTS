@@ -16,19 +16,222 @@
 
 
 ## 2. 解题思路
+### 算法一：递归
+判断 len(s3) 是否等于 len(s1) + len(s2)
+
+如果 s1 是空串，则判断 s2 是否与 s3 相同
+如果 s2 是空串，则判断 s1 是否与 s3 相同
+如果 s3[0] == s1[0] 则递归判断 s1[1:len(s1)],s2,s3[1:len(s3)]
+如果 s3[0] == s2[0] 则递归判断 s1,s2[1:len(s2)],s3[1,len(s3)]
+
+递归代码
+```go
+    if s1 == "" {
+		return s2 == s3
+	}
+	if s2 == "" {
+		return s1 == s3
+	}
+	return (s3[0] == s1[0] && isInter(s1[1:len(s1)], s2, s3[1:len(s3)])) || (s3[0] == s2[0] && isInter(s1, s2[1:len(s2)], s3[1:len(s3)]))
+
+```
+### 算法二：动态规划
+dp[i][j] bool 表示 s3[0:i+j] 是否是 s1[0:i] 和 s2[0:j] 的交叉组成
+
+dp[i][j] = (dp[i-1][j] && s1[i-1] == s3[i+j-1]) || (dp[i][j-1] && s2[j-1] == s3[i+j-1])
+
+如果 i==0 则 dp[i][j] = dp[i][j-1] && s2[j-1] == s3[i+j-1]
+如果 j==0 则 dp[i][j] = dp[i-1][j] && s1[i-1] == s3[i+j-1]
+
+dp[0][0] = true
+最后求出 dp[m][n] ,其中 m 为 s1 的长度, n 为 s2 的长度
 
 ## 3. 代码
-
+```go
+func isInterleaveDp(s1 string, s2 string, s3 string) bool {
+	l1, l2, l3 := len(s1), len(s2), len(s3)
+	if l3 != l1+l2 {
+		return false
+	}
+	var dp [][]bool
+	dp = make([][]bool, l1+1)
+	for i := 0; i < l1+1; i++ {
+		dp[i] = make([]bool, l2+1)
+	}
+	dp[0][0] = true
+	for i := 1; i < l1+1; i++ {
+		dp[i][0] = dp[i-1][0] && s1[i-1] == s3[i-1]
+	}
+	for j := 1; j < l2+1; j++ {
+		dp[0][j] = dp[0][j-1] && s2[j-1] == s3[j-1]
+	}
+	for i := 1; i < l1+1; i++ {
+		for j := 1; j < l2+1; j++ {
+			dp[i][j] = (dp[i-1][j] && s1[i-1] == s3[i+j-1]) || (dp[i][j-1] && s2[j-1] == s3[i+j-1])
+		}
+	}
+	return dp[l1][l2]
+}
+```
 ## 4. 复杂度分析
+动态规划算法
+* 时间复杂度 : O(m*n)
+* 空间复杂度 : O(m*n)
 
 ---
 
-# Review []()
+# Review [Exception Handling in Java Streams](https://medium.com/swlh/exception-handling-in-java-streams-5947e48f671c)
+Java Stream 中的异常处理
+## 未检查的异常(Unchecked Exceptions)
+```java
+List<String> integers = Arrays.asList("44", "373", "xyz", "145");
+integers.forEach(str -> {
+    try {
+        System.out.println(Integer.parseInt(str));
+    }catch (NumberFormatException ex) {
+        System.err.println("Can't format this string");
+    }
+}
+);
+```
+这样有效，但是编写的代码不够简洁易读.
+可以将异常处理移到其他地方：
+
+```java
+static Consumer<String> exceptionHandledConsumer(Consumer<String> unhandledConsumer) {
+    return obj -> {
+        try {
+            unhandledConsumer.accept(obj);
+        } catch (NumberFormatException e) {
+            System.err.println(
+                    "Can't format this string");
+        }
+    };
+}
+public static void main(String[] args) {
+    List<String> integers = Arrays.asList("44", "xyz", "145");
+    integers.forEach(exceptionHandledConsumer(str -> System.out.println(Integer.parseInt(str))));
+}
+```
+这段代码可以改为使用泛型，从而适应更多场景：
+```java
+static <Target, ExObj extends Exception> Consumer<Target> handledConsumer(Consumer<Target> targetConsumer, Class<ExObj> exceptionClazz) {
+    return obj -> {
+        try {
+            targetConsumer.accept(obj);
+        } catch (Exception ex) {
+            try {
+                ExObj exCast = exceptionClazz.cast(ex);
+                System.err.println(
+                        "Exception occured : " + exCast.getMessage());
+            } catch (ClassCastException ccEx) {
+                throw ex;
+            }
+        }
+    };
+}
+``` 
+使用以上代码，我们最初的代码可以简化为
+```java
+List<String> integers = Arrays.asList("44", "373", "xyz", "145");
+integers.forEach(
+        handledConsumer(str -> System.out.println(Integer.parseInt(str)), 
+        NumberFormatException.class));
+```
+如果我们要捕获 ArithmeticException 异常，则可以：
+```java
+List<Integer> ints = Arrays.asList(5, 10, 0, 15, 20, 30, 0, 9);
+ints.forEach(
+        handledConsumer(
+                i -> System.out.println(1000 / i),
+                ArithmeticException.class));
+```
+## 检查的异常(Checked Exceptions)
+```java
+List<Integer> list = Arrays.asList(5, 4, 3, 2, 1);
+    list.forEach(i -> {
+        try {
+            Thread.sleep(i);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    });
+}
+```
+1. 创建一个新接口处理检查异常
+```java
+@FunctionalInterface
+public interface HandlingConsumer<Target, ExObj extends Exception> {
+    void accept(Target target) throws ExObj;
+}
+```
+2. 添加一个静态方法，并将检查异常转换为 RuntimeException。因为这样可以使得我们能够
+处理调用方法中的异常并释放 lambda 来完成其实际工作
+```java
+@FunctionalInterface
+public interface HandlingConsumer<Target, ExObj extends Exception> {
+    void accept(Target target) throws ExObj;
+    static <Target> Consumer<Target> handlingConsumerBuilder(
+            HandlingConsumer<Target, Exception> handlingConsumer) {
+        return obj -> {
+            try {
+                handlingConsumer.accept(obj);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        };
+    }
+}
+```
+现在我们的代码可以简化为：
+```java
+List<Integer> list = Arrays.asList(5, 4, 3, 2, 1);
+list.forEach(handlingConsumerBuilder(i->Thread.sleep(i)));
+```
 
 ---
 
-# Tip
- 
+# Tip VS Code 配置 Golang 开发环境
+1. 官网下载 [Visual Studio Code](https://code.visualstudio.com/)
+2. 安装 Go 语言扩展 [Go for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-vscode.Go)
+3. 配置代理，安装 Go 语言相关包
+```jshelllanguage
+export http_proxy=http://127.0.0.1:1087
+export https_proxy=http://127.0.0.1:1087
+```
+安装包
+```gotemplate
+go get -u -v github.com/mdempsky/gocode
+go get -u -v github.com/rogpeppe/godef
+go get -u -v golang.org/x/tools/cmd/guru
+go get -u -v golang.org/x/tools/cmd/gorename
+go get -u -v golang.org/x/tools/cmd/goimports
+go get -u -v github.com/uudashr/gopkgs/cmd/gopkgs
+go get -u -v github.com/golangci/golangci-lint/cmd/golangci-lint
+go get -u -v github.com/ramya-rao-a/go-outline
+go get -u -v github.com/acroca/go-symbols
+go get -u -v github.com/zmb3/gogetdoc
+go get -u -v github.com/fatih/gomodifytags
+go get -u -v github.com/cweill/gotests/...
+go get -u -v github.com/josharian/impl
+go get -u -v github.com/davidrjenni/reftools/cmd/fillstruct
+```
+各个包的说明：
+* gocode 代码补全
+* godef 跳转到定义
+* guru 获得代码引用
+* gorename 重命名源码文件
+* goimports 自动格式化 import
+* gopkgs 列出包
+* golangci-lint 静态代码检查
+* go-outline 文件大纲
+* go-symbols 工作区符号搜索
+* gogetdoc 显示方法签名
+* gomodifytags tags管理
+* gotests 测试
+* impl 自动生成接口实现
+* fillstruct 自动填充 struct 的默认值
+
 
 ---
     
