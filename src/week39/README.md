@@ -2,14 +2,66 @@
 
 ---
 
-# Algorithm []()
+# Algorithm [132. Palindrome Partitioning II](https://leetcode.com/problems/palindrome-partitioning-ii/)
 ## 1. 问题描述
+回文分割
+
+给定一个字符串 s，对 s 进行分割，要求每一段都是回文字符串，求对 s 的最小分割数
+
+#### 示例：
+* 输入 ： "aab"
+* 输出 ： 1
+* 解释 ： ["aa","b"] 只需分割一次
 
 ## 2. 解题思路
+dp[i] 表示字符串 s 中前 i 个字母(s[0:i-1])组成的子串的最小分割数
+
+dp[n] 为最终所求
+
+遍历 i，更新 dp[i+len+1] 和 dp[i+len+2]
+
+dp[i+len+1] 其中 len 是以 i 为中心，总长度为 2*len+1 的回文串（奇数串），比如 aba
+
+dp[i+len+2] 其中 len 是以 i 为中心之一，总长度为 2*len+2 的回文串（偶数串），比如 abba
+
+i-len 正好是回文串（奇偶串）的起始位置
+
+dp[i-len] 表示 s[0,i-len-1] 的最小分割数
+
+状态转移方程：
+* dp[end] = min(dp[end], dp[start - 1] + 1)
 
 ## 3. 代码
+```go
+const INT_MAX = int(^uint(0) >> 1)
 
+func minCut(s string) int {
+	n := len(s)
+	dp := make([]int, n+1)
+	for i:=0; i<n+1;i++ {
+		dp[i] = INT_MAX
+	}
+	dp[0] = -1
+	for i:=0; i<n; i++ {
+		//palindrome of length 1,3,5...
+		for len:=0;i-len>=0 && i+len<n && s[i-len] == s[i+len]; len++ {
+			if dp[i+len+1] > dp[i-len]+1 {
+				dp[i+len+1] = dp[i-len]+1
+			}
+		}
+		//palindrome of length 2,4,6...
+		for len:=0;i-len>=0 && i+len+1<n && s[i-len] == s[i+len+1]; len++ {
+			if dp[i+len+2] > dp[i-len]+1 {
+				dp[i+len+2]=dp[i-len]+1
+			}
+		}
+	}
+	return dp[n]
+}
+```
 ## 4. 复杂度分析
+* 时间复杂度：O(n<sup>2</sup>)
+* 空间复杂度：O(n)
 
 ---
 
