@@ -65,7 +65,64 @@ func minCut(s string) int {
 
 ---
 
-# Review []()
+# Review [A Billion Rows A Second](https://towardsdatascience.com/a-billion-rows-a-second-36b7a2066175)
+1秒钟处理十亿条数据
+
+使用 Python 库 [Vaex](https://github.com/vaexio/vaex/blob/master/docs/source/index.ipynb)
+
+## 驯服野兽
+对于缺少 Hadoop 经验的人来说，处理大数据非常困难
+## 数据类型
+1. 下载一个文件转换工具 [Topcat](http://www.star.bris.ac.uk/~mbt/topcat/#standalone)
+2. 把这个文件拷贝到 csv 文件的目录中
+3. 转换 csv 文件为 HDF5
+
+转换脚本 [convert_to_hdfs.sh](https://gist.github.com/jes-moore/47ed286a3fd01ac5295de3193234a8c9#file-convert_to_hdfs-sh)
+```bash
+#!/bin/bash
+#Variables
+csv_files='ls /path/to/csv/files/*.csv'
+out_file='/path/to/output/folder'
+file_locs=$out_file/files.txt
+fits_out=$out_file/merged.fits
+hdf5_out=$out_file/merged.hdf5
+# Create Txt File of Locations
+> $file_locs
+for f in $csv_files
+do
+if [ $f = 'ls' ]; then
+continue
+fi
+echo "$f" >> $file_locs
+done
+#Create .fits Files and Convert to hdf5
+echo 'Compiling Fits Files For Conversion to HDF5'
+./topcat_jar/topcat -stilts -Djava.io.tmpdir=/tmp tcat in=@$file_locs ifmt=csv out=$fits_out ofmt=colfits
+#Use Vaex to convert .fits to HDF5
+echo 'Converting .fits to HDF5'
+source /path/to/venv # if applicable
+vaex convert file $fits_out $hdf5_out
+rm $fits_out
+rm $file_locs
+echo 'Process Complete: Deleting .txt file and .fits intermediary file'
+echo 'HDF5 saved to: $hdf5_out'
+```
+
+![vaex](vaex.png)
+
+数据集中有900万行数据，每一行都包含经纬度，假设我们要找纽约市中的所有点
+
+* nyc_lat = [40.348424, 40.913145]
+* nyc_long = [-74.432885, -73.696834]
+
+这是Vaex与Pandas的比较
+![vaex_time](vaex_time)
+
+使用 Numba 可以显著提高复杂的数学运算
+
+## 利用数据科学工具
+像Vaex这样的工具可以让没有大数据工程师经验的数据科学家
+能够以非常简便的方式来处理难以置信的大型数据集。
 
 ---
 
