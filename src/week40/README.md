@@ -2,10 +2,46 @@
 
 ---
 
-# Algorithm []()
+# Algorithm [140. Word Break II](https://leetcode.com/problems/word-break-ii/)
 ## 1. 问题描述
+给定一个非空字符串 s 和一个字典 wordDict ，字典中包含若干个单词，在字符串 s 中插入空格，构造一个句子。
+要求句子中所有的单词都在字典 wordDict 中，返回所有句子。
 
+注意：
+* 字典中的单词可以使用多次
+* 假设字典中不包含重复的单词
+
+#### 示例1：
+* 输入：
+    * s="catsanddog"
+    * wordDict = ["cat", "cats", "and", "sand", "dog"]
+* 输出：
+```text
+[
+  "cats and dog",
+  "cat sand dog"
+]
+```
+#### 示例2：
+* 输入：
+    * s = "pineapplepenapple"
+    * wordDict = ["apple", "pen", "applepen", "pine", "pineapple"]
+* 输出：
+```text
+[
+  "pine apple pen apple",
+  "pineapple pen apple",
+  "pine applepen apple"
+]
+```
+#### 示例3：
+* 输入：
+    * s = "catsandog"
+    * wordDict = ["cats", "dog", "sand", "and", "cat"]
+* 输出 ： []
 ## 2. 解题思路
+深度优先搜索
+
 
 ## 3. 代码
 
