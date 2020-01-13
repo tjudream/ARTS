@@ -42,10 +42,50 @@
 ## 2. 解题思路
 深度优先搜索
 
+对于字典 wordDict 中的每一个单词，判断其是否是 s 的前缀
+
+如果不是，则判断下一个
+
+如果是 s 的前缀，则递归 dfs(s[len(w):],wordDict)
+
+递归返回之后组合结果 w + " " res[i]
+
+使用一个 map[string,string[]] 记录已经计算过的结果
 
 ## 3. 代码
+```golang
+func wordBreak(s string, wordDict []string) []string {
+	return dfs(s, wordDict, map[string][]string{})
+}
 
+func dfs(s string, wordDict []string, m map[string][]string) []string {
+	if val, ok := m[s]; ok {
+		return val
+	}
+
+	if len(s) == 0 {
+		return []string{""}
+	}
+
+	var res []string
+	for _, w := range wordDict {
+		if len(w) <= len(s) && w == s[:len(w)] {
+			for _, str := range dfs(s[len(w):], wordDict, m) {
+				if len(str) == 0 {
+					res = append(res, w)
+				} else {
+					res = append(res, w+" "+str)
+				}
+			}
+		}
+	}
+	m[s] = res
+	return res
+}
+```
 ## 4. 复杂度分析
+* 时间复杂度： O(mn<sup>2</sup>)  n=len(s), m=len(wordDict)
+* 空间复杂度： O(mn)
 
 ---
 
